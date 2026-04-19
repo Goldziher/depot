@@ -14,6 +14,7 @@ pub fn build_app(state: AppState) -> Router {
         // .nest("/cargo", cargo::router(state.clone()))
         // .nest("/hex", hex::router(state.clone()))
         .layer(CompressionLayer::new())
+        // TODO: replace CorsLayer::permissive() with a restrictive policy before production use
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
         .with_state(state)

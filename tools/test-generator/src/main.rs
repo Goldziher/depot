@@ -54,8 +54,6 @@ fn main() {
     .unwrap();
     writeln!(output, "// Source fixtures: {}", cli.fixtures.display()).unwrap();
     writeln!(output).unwrap();
-    writeln!(output, "use serde_json::Value;").unwrap();
-    writeln!(output).unwrap();
 
     let mut total_tests = 0usize;
 
@@ -83,11 +81,14 @@ fn main() {
         // Derive a module-level prefix from the fixture path.
         let module_prefix = derive_module_prefix(relative);
 
+        // Detect category from the first directory component of the relative path.
+        let category = detect_category(relative);
+
         writeln!(output, "// Fixture: {}", relative.display()).unwrap();
 
         for case in &cases {
             let function_name = make_function_name(&module_prefix, &case.name);
-            generate_test_function(&mut output, &function_name, case, relative);
+            generate_test_function(&mut output, &function_name, case, relative, &category);
             total_tests += 1;
         }
 
@@ -153,6 +154,16 @@ fn derive_module_prefix(relative_path: &Path) -> String {
     sanitize_identifier(&raw)
 }
 
+/// Detects the fixture category from the first directory component.
+fn detect_category(relative_path: &Path) -> String {
+    relative_path
+        .components()
+        .next()
+        .and_then(|c| c.as_os_str().to_str())
+        .unwrap_or("unknown")
+        .to_string()
+}
+
 /// Converts a test case name into a valid Rust function name.
 fn make_function_name(prefix: &str, case_name: &str) -> String {
     let suffix = case_name
@@ -200,8 +211,565 @@ fn sanitize_identifier(input: &str) -> String {
     result
 }
 
-/// Generates a single `#[test]` function for a test case.
+/// Generates a single `#[test]` function for a test case,
+/// dispatching to the appropriate category-specific generator.
 fn generate_test_function(
+    output: &mut String,
+    function_name: &str,
+    case: &TestCase,
+    fixture_path: &Path,
+    category: &str,
+) {
+    match category {
+        "package" => generate_package_test(output, function_name, case, fixture_path),
+        "integrity" => generate_integrity_test(output, function_name, case, fixture_path),
+        "policy" => generate_policy_test(output, function_name, case, fixture_path),
+        "config" => generate_config_test(output, function_name, case, fixture_path),
+        "lockfile" => generate_lockfile_test(output, function_name, case, fixture_path),
+        _ => generate_fallback_test(output, function_name, case, fixture_path),
+    }
+}
+
+/// Generate test for package category fixtures.
+fn generate_package_test(
+    output: &mut String,
+    function_name: &str,
+    case: &TestCase,
+    fixture_path: &Path,
+) {
+    let fixture_name = &case.name;
+
+    // Detect sub-type based on expected keys and input keys.
+    let has_normalized = case.expected.get("normalized").is_some();
+    let has_key = case.expected.get("key").is_some();
+    let has_value_input = case.input.get("value").is_some();
+
+    if has_normalized {
+        // Normalization test
+        let input_name = case.input["name"].as_str().unwrap_or("");
+        let input_ecosystem = case.input["ecosystem"].as_str().unwrap_or("");
+        let expected_normalized = case.expected["normalized"].as_str().unwrap_or("");
+
+        writeln!(output, "#[test]").unwrap();
+        writeln!(output, "fn {function_name}() {{").unwrap();
+        writeln!(
+            output,
+            "    // Fixture: {} | Case: {fixture_name:?}",
+            fixture_path.display()
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    let pkg = depot_core::package::PackageName::new({:?});",
+            input_name
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    let eco: depot_core::package::Ecosystem = {:?}.parse().expect(\"parse ecosystem\");",
+            input_ecosystem
+        )
+        .unwrap();
+        writeln!(output, "    let result = pkg.normalized(eco);").unwrap();
+        writeln!(
+            output,
+            "    assert_eq!(result.as_ref(), {:?}, \"fixture: {}\");",
+            expected_normalized, fixture_name
+        )
+        .unwrap();
+        writeln!(output, "}}").unwrap();
+        writeln!(output).unwrap();
+    } else if has_key {
+        // Storage key test
+        let ecosystem = case.input["ecosystem"].as_str().unwrap_or("");
+        let name = case.input["name"].as_str().unwrap_or("");
+        let version = case.input["version"].as_str().unwrap_or("");
+        let filename = case.input["filename"].as_str().unwrap_or("");
+        let expected_key = case.expected["key"].as_str().unwrap_or("");
+
+        writeln!(output, "#[test]").unwrap();
+        writeln!(output, "fn {function_name}() {{").unwrap();
+        writeln!(
+            output,
+            "    // Fixture: {} | Case: {fixture_name:?}",
+            fixture_path.display()
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    let artifact = depot_core::package::ArtifactId {{"
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "        ecosystem: {:?}.parse().expect(\"parse ecosystem\"),",
+            ecosystem
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "        name: depot_core::package::PackageName::new({:?}),",
+            name
+        )
+        .unwrap();
+        writeln!(output, "        version: {:?}.to_string(),", version).unwrap();
+        writeln!(output, "        filename: {:?}.to_string(),", filename).unwrap();
+        writeln!(output, "    }};").unwrap();
+        writeln!(
+            output,
+            "    assert_eq!(artifact.storage_key(), {:?}, \"fixture: {}\");",
+            expected_key, fixture_name
+        )
+        .unwrap();
+        writeln!(output, "}}").unwrap();
+        writeln!(output).unwrap();
+    } else if has_value_input {
+        // Ecosystem parsing test
+        let input_value = case.input["value"].as_str().unwrap_or("");
+
+        writeln!(output, "#[test]").unwrap();
+        writeln!(output, "fn {function_name}() {{").unwrap();
+        writeln!(
+            output,
+            "    // Fixture: {} | Case: {fixture_name:?}",
+            fixture_path.display()
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    let result: Result<depot_core::package::Ecosystem, _> = {:?}.parse();",
+            input_value
+        )
+        .unwrap();
+
+        match &case.error {
+            Some(error_str) => {
+                writeln!(
+                    output,
+                    "    let err = result.expect_err(\"fixture '{}' should produce an error\");",
+                    fixture_name
+                )
+                .unwrap();
+                writeln!(
+                    output,
+                    "    assert!(err.to_string().contains({:?}), \"fixture '{}': error '{{}}' should contain '{}'\", err);",
+                    error_str, fixture_name, error_str
+                )
+                .unwrap();
+            }
+            None => {
+                let expected_eco = case.expected["ecosystem"].as_str().unwrap_or("");
+                writeln!(
+                    output,
+                    "    let eco = result.expect(\"fixture '{}' should parse successfully\");",
+                    fixture_name
+                )
+                .unwrap();
+                writeln!(
+                    output,
+                    "    assert_eq!(eco.to_string(), {:?}, \"fixture: {}\");",
+                    expected_eco, fixture_name
+                )
+                .unwrap();
+            }
+        }
+
+        writeln!(output, "}}").unwrap();
+        writeln!(output).unwrap();
+    } else {
+        generate_fallback_test(output, function_name, case, fixture_path);
+    }
+}
+
+/// Generate test for integrity category fixtures.
+fn generate_integrity_test(
+    output: &mut String,
+    function_name: &str,
+    case: &TestCase,
+    fixture_path: &Path,
+) {
+    let fixture_name = &case.name;
+    let input_data = case.input["data"].as_str().unwrap_or("");
+    let expected_blake3 = case.expected.get("blake3");
+
+    writeln!(output, "#[test]").unwrap();
+    writeln!(output, "fn {function_name}() {{").unwrap();
+    writeln!(
+        output,
+        "    // Fixture: {} | Case: {fixture_name:?}",
+        fixture_path.display()
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "    let hash = depot_core::integrity::blake3_hex({:?}.as_bytes());",
+        input_data
+    )
+    .unwrap();
+
+    // If expected.blake3 is a non-null string, assert exact match.
+    if let Some(serde_json::Value::String(expected_hash)) = expected_blake3 {
+        writeln!(
+            output,
+            "    assert_eq!(hash, {:?}, \"fixture: {}\");",
+            expected_hash, fixture_name
+        )
+        .unwrap();
+    }
+
+    // Always verify roundtrip.
+    writeln!(
+        output,
+        "    assert!(depot_core::integrity::verify_blake3(&bytes::Bytes::from({:?}.to_string()), &hash), \"fixture '{}': roundtrip verification failed\");",
+        input_data, fixture_name
+    )
+    .unwrap();
+
+    writeln!(output, "}}").unwrap();
+    writeln!(output).unwrap();
+}
+
+/// Generate test for policy category fixtures.
+fn generate_policy_test(
+    output: &mut String,
+    function_name: &str,
+    case: &TestCase,
+    fixture_path: &Path,
+) {
+    let fixture_name = &case.name;
+    let policy = &case.input["policy"];
+    let package = &case.input["package"];
+
+    let block_unlicensed = policy["block_unlicensed"].as_bool().unwrap_or(false);
+    let blocked_packages = policy["blocked_packages"]
+        .as_array()
+        .map(|a| a.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
+        .unwrap_or_default();
+    let allowed_licenses = policy["allowed_licenses"]
+        .as_array()
+        .map(|a| a.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
+        .unwrap_or_default();
+
+    let pkg_name = package["name"].as_str().unwrap_or("");
+    let pkg_version = package["version"].as_str().unwrap_or("");
+    let pkg_license = package.get("license");
+    let pkg_yanked = package["yanked"].as_bool().unwrap_or(false);
+
+    let expected_allowed = case.expected["allowed"].as_bool().unwrap_or(true);
+
+    writeln!(output, "#[test]").unwrap();
+    writeln!(output, "fn {function_name}() {{").unwrap();
+    writeln!(
+        output,
+        "    // Fixture: {} | Case: {fixture_name:?}",
+        fixture_path.display()
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "    let policy = depot_core::policy::PolicyConfig {{"
+    )
+    .unwrap();
+    writeln!(output, "        block_unlicensed: {block_unlicensed},").unwrap();
+    writeln!(
+        output,
+        "        max_vuln_severity: depot_core::policy::VulnSeverity::default(),"
+    )
+    .unwrap();
+
+    // Allowed licenses
+    write!(output, "        allowed_licenses: vec![").unwrap();
+    for (i, lic) in allowed_licenses.iter().enumerate() {
+        if i > 0 {
+            write!(output, ", ").unwrap();
+        }
+        write!(output, "{:?}.to_string()", lic).unwrap();
+    }
+    writeln!(output, "],").unwrap();
+
+    // Blocked packages
+    write!(output, "        blocked_packages: vec![").unwrap();
+    for (i, pkg) in blocked_packages.iter().enumerate() {
+        if i > 0 {
+            write!(output, ", ").unwrap();
+        }
+        write!(output, "{:?}.to_string()", pkg).unwrap();
+    }
+    writeln!(output, "],").unwrap();
+
+    writeln!(output, "    }};").unwrap();
+
+    // Build metadata
+    writeln!(
+        output,
+        "    let metadata = depot_core::package::VersionMetadata {{"
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "        name: depot_core::package::PackageName::new({:?}),",
+        pkg_name
+    )
+    .unwrap();
+    writeln!(output, "        version: {:?}.to_string(),", pkg_version).unwrap();
+
+    // License: handle null vs string
+    match pkg_license {
+        Some(serde_json::Value::String(s)) => {
+            writeln!(output, "        license: Some({:?}.to_string()),", s).unwrap();
+        }
+        _ => {
+            writeln!(output, "        license: None,").unwrap();
+        }
+    }
+
+    writeln!(output, "        yanked: {pkg_yanked},").unwrap();
+    writeln!(
+        output,
+        "        artifacts: vec![depot_core::package::ArtifactDigest {{"
+    )
+    .unwrap();
+    writeln!(output, "            filename: \"dummy.tar.gz\".into(),").unwrap();
+    writeln!(output, "            blake3: \"0\".repeat(64),").unwrap();
+    writeln!(output, "            size: 0,").unwrap();
+    writeln!(output, "        }}],").unwrap();
+    writeln!(output, "    }};").unwrap();
+
+    writeln!(output, "    let result = policy.check(&metadata);").unwrap();
+
+    if expected_allowed {
+        writeln!(
+            output,
+            "    assert!(result.is_ok(), \"fixture '{}' should be allowed but got: {{:?}}\", result);",
+            fixture_name
+        )
+        .unwrap();
+    } else {
+        let error_str = case.error.as_deref().unwrap_or("");
+        writeln!(
+            output,
+            "    let err = result.expect_err(\"fixture '{}' should be blocked\");",
+            fixture_name
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    assert!(err.to_string().contains({:?}), \"fixture '{}': error '{{}}' should contain '{}'\", err);",
+            error_str, fixture_name, error_str
+        )
+        .unwrap();
+    }
+
+    writeln!(output, "}}").unwrap();
+    writeln!(output).unwrap();
+}
+
+/// Generate test for config category fixtures.
+fn generate_config_test(
+    output: &mut String,
+    function_name: &str,
+    case: &TestCase,
+    fixture_path: &Path,
+) {
+    let fixture_name = &case.name;
+    let toml_input = case.input["toml"].as_str().unwrap_or("");
+
+    writeln!(output, "#[test]").unwrap();
+    writeln!(output, "fn {function_name}() {{").unwrap();
+    writeln!(
+        output,
+        "    // Fixture: {} | Case: {fixture_name:?}",
+        fixture_path.display()
+    )
+    .unwrap();
+
+    if let Some(error_str) = &case.error {
+        // Error case
+        writeln!(
+            output,
+            "    let result = toml::from_str::<depot_core::config::Config>({:?});",
+            toml_input
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    assert!(result.is_err(), \"fixture '{}' should fail to parse\");",
+            fixture_name
+        )
+        .unwrap();
+        let _ = error_str; // We just verify is_err
+    } else {
+        // Success case
+        writeln!(
+            output,
+            "    let config: depot_core::config::Config = toml::from_str({:?}).expect(\"fixture '{}' should parse\");",
+            toml_input, fixture_name
+        )
+        .unwrap();
+
+        if let Some(bind) = case.expected.get("bind").and_then(|v| v.as_str()) {
+            writeln!(
+                output,
+                "    assert_eq!(config.server.bind, {:?}, \"fixture '{}' bind\");",
+                bind, fixture_name
+            )
+            .unwrap();
+        }
+        if let Some(backend) = case
+            .expected
+            .get("storage_backend")
+            .and_then(|v| v.as_str())
+        {
+            writeln!(
+                output,
+                "    assert_eq!(config.storage.backend, {:?}, \"fixture '{}' backend\");",
+                backend, fixture_name
+            )
+            .unwrap();
+        }
+        if let Some(bucket) = case.expected.get("s3_bucket").and_then(|v| v.as_str()) {
+            writeln!(
+                output,
+                "    assert_eq!(config.storage.s3.as_ref().expect(\"s3 config\").bucket, {:?}, \"fixture '{}' s3 bucket\");",
+                bucket, fixture_name
+            )
+            .unwrap();
+        }
+        if let Some(block) = case
+            .expected
+            .get("block_unlicensed")
+            .and_then(|v| v.as_bool())
+        {
+            writeln!(
+                output,
+                "    assert_eq!(config.policies.block_unlicensed, {}, \"fixture '{}' block_unlicensed\");",
+                block, fixture_name
+            )
+            .unwrap();
+        }
+        if let Some(auth) = case.expected.get("auth_enabled").and_then(|v| v.as_bool()) {
+            writeln!(
+                output,
+                "    assert_eq!(config.auth.enabled, {}, \"fixture '{}' auth_enabled\");",
+                auth, fixture_name
+            )
+            .unwrap();
+        }
+    }
+
+    writeln!(output, "}}").unwrap();
+    writeln!(output).unwrap();
+}
+
+/// Generate test for lockfile category fixtures.
+fn generate_lockfile_test(
+    output: &mut String,
+    function_name: &str,
+    case: &TestCase,
+    fixture_path: &Path,
+) {
+    let fixture_name = &case.name;
+    let toml_input = case.input["toml"].as_str().unwrap_or("");
+
+    writeln!(output, "#[test]").unwrap();
+    writeln!(output, "fn {function_name}() {{").unwrap();
+    writeln!(
+        output,
+        "    // Fixture: {} | Case: {fixture_name:?}",
+        fixture_path.display()
+    )
+    .unwrap();
+
+    if case.error.is_some() {
+        writeln!(
+            output,
+            "    assert!(depot_core::lockfile::LockFile::from_toml({:?}).is_err(), \"fixture '{}' should fail\");",
+            toml_input, fixture_name
+        )
+        .unwrap();
+    } else {
+        writeln!(
+            output,
+            "    let lock = depot_core::lockfile::LockFile::from_toml({:?}).expect(\"fixture '{}' should parse\");",
+            toml_input, fixture_name
+        )
+        .unwrap();
+
+        if let Some(sv) = case.expected.get("schema_version").and_then(|v| v.as_u64()) {
+            writeln!(
+                output,
+                "    assert_eq!(lock.metadata.schema_version, {}, \"fixture '{}' schema_version\");",
+                sv, fixture_name
+            )
+            .unwrap();
+        }
+        if let Some(dv) = case.expected.get("depot_version").and_then(|v| v.as_str()) {
+            writeln!(
+                output,
+                "    assert_eq!(lock.metadata.depot_version, {:?}, \"fixture '{}' depot_version\");",
+                dv, fixture_name
+            )
+            .unwrap();
+        }
+        if let Some(count) = case.expected.get("package_count").and_then(|v| v.as_u64()) {
+            writeln!(
+                output,
+                "    assert_eq!(lock.packages.len(), {}, \"fixture '{}' package_count\");",
+                count, fixture_name
+            )
+            .unwrap();
+        }
+        if let Some(name) = case
+            .expected
+            .get("first_package_name")
+            .and_then(|v| v.as_str())
+        {
+            writeln!(
+                output,
+                "    assert_eq!(lock.packages[0].name, {:?}, \"fixture '{}' first package name\");",
+                name, fixture_name
+            )
+            .unwrap();
+        }
+        if let Some(eco) = case
+            .expected
+            .get("first_package_ecosystem")
+            .and_then(|v| v.as_str())
+        {
+            writeln!(
+                output,
+                "    assert_eq!(lock.packages[0].ecosystem.to_string(), {:?}, \"fixture '{}' first package ecosystem\");",
+                eco, fixture_name
+            )
+            .unwrap();
+        }
+
+        // Roundtrip: serialize and re-parse
+        writeln!(
+            output,
+            "    let serialized = lock.to_toml().expect(\"serialize lockfile\");"
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    let reparsed = depot_core::lockfile::LockFile::from_toml(&serialized).expect(\"fixture '{}' roundtrip\");",
+            fixture_name
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "    assert_eq!(lock.packages.len(), reparsed.packages.len(), \"fixture '{}' roundtrip package count\");",
+            fixture_name
+        )
+        .unwrap();
+    }
+
+    writeln!(output, "}}").unwrap();
+    writeln!(output).unwrap();
+}
+
+/// Fallback test generator for unknown categories.
+fn generate_fallback_test(
     output: &mut String,
     function_name: &str,
     case: &TestCase,
@@ -221,62 +789,32 @@ fn generate_test_function(
     .unwrap();
     writeln!(
         output,
-        "    let input: Value = serde_json::from_str(r#\"{}\"#).expect(\"parse input\");",
+        "    let _input: serde_json::Value = serde_json::from_str(r#\"{}\"#).expect(\"parse input\");",
         escape_raw_string(&input_json)
     )
     .unwrap();
     writeln!(
         output,
-        "    let expected: Value = serde_json::from_str(r#\"{}\"#).expect(\"parse expected\");",
+        "    let _expected: serde_json::Value = serde_json::from_str(r#\"{}\"#).expect(\"parse expected\");",
         escape_raw_string(&expected_json)
     )
     .unwrap();
 
     match &case.error {
         Some(error_substring) => {
-            writeln!(output, "    let error_substring = {:?};", error_substring).unwrap();
-            writeln!(output, "    // This test case expects an error.").unwrap();
-            writeln!(output, "    assert!(").unwrap();
             writeln!(
                 output,
-                "        !expected.as_object().map_or(false, |obj| obj.is_empty())  || !error_substring.is_empty(),"
+                "    assert!(!{:?}.is_empty(), \"error case must have non-empty error substring\");",
+                error_substring
             )
             .unwrap();
-            writeln!(
-                output,
-                "        \"error case must have non-empty error substring or non-empty expected: {{}} ({{}})\",",
-            )
-            .unwrap();
-            writeln!(output, "        error_substring, {:?}", case.name,).unwrap();
-            writeln!(output, "    );").unwrap();
-            writeln!(
-                output,
-                "    // Verify fixture is loadable and error field is present."
-            )
-            .unwrap();
-            writeln!(
-                output,
-                "    assert!(!error_substring.is_empty(), \"error substring should not be empty for error case: {{}}\", {:?});",
-                case.name,
-            )
-            .unwrap();
-            writeln!(output, "    let _ = (input, expected);").unwrap();
         }
         None => {
-            writeln!(output, "    // This test case expects success.").unwrap();
             writeln!(
                 output,
-                "    assert!(expected.is_object(), \"expected must be a JSON object: {{}}\", {:?});",
-                case.name,
+                "    assert!(_expected.is_object(), \"expected must be a JSON object\");"
             )
             .unwrap();
-            writeln!(
-                output,
-                "    assert!(!expected.as_object().unwrap().is_empty(), \"expected must not be empty for success case: {{}}\", {:?});",
-                case.name,
-            )
-            .unwrap();
-            writeln!(output, "    let _ = input;").unwrap();
         }
     }
 
@@ -285,10 +823,6 @@ fn generate_test_function(
 }
 
 /// Escapes content that could break a `r#"..."#` raw string literal.
-///
-/// The only problematic sequence is `"#` — we replace it with `\"#` inside
-/// the raw string, which is imperfect but sufficient for JSON values that
-/// do not contain that sequence.
 fn escape_raw_string(input: &str) -> String {
     input.replace("\"#", "\\\"#")
 }

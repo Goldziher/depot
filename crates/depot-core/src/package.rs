@@ -64,7 +64,15 @@ impl PackageName {
     /// transformation is needed (zero-alloc fast path).
     pub fn normalized(&self, ecosystem: Ecosystem) -> Cow<'_, str> {
         match ecosystem {
-            Ecosystem::PyPI => Cow::Owned(normalize_pypi(&self.0)),
+            Ecosystem::PyPI => {
+                if self.0.bytes().all(|b| b.is_ascii_lowercase())
+                    && memchr::memchr3(b'.', b'-', b'_', self.0.as_bytes()).is_none()
+                {
+                    Cow::Borrowed(&self.0)
+                } else {
+                    Cow::Owned(normalize_pypi(&self.0))
+                }
+            }
             Ecosystem::Npm => normalize_npm(&self.0),
             Ecosystem::Cargo | Ecosystem::Hex => {
                 if self
@@ -100,6 +108,10 @@ fn normalize_pypi(name: &str) -> String {
             result.push(c);
             prev_sep = false;
         }
+    }
+    // Trim trailing separator
+    while result.ends_with('-') {
+        result.pop();
     }
     result
 }

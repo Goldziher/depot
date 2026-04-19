@@ -10,6 +10,8 @@ pub struct HexPackage {
     #[serde(default)]
     pub html_url: Option<String>,
     #[serde(default)]
+    pub docs_html_url: Option<String>,
+    #[serde(default)]
     pub meta: Option<HexMeta>,
     pub releases: Vec<HexRelease>,
     #[serde(default)]

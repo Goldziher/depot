@@ -52,5 +52,11 @@
 		"input": { "name": "Phoenix", "ecosystem": "hex" },
 		"expected": { "normalized": "phoenix" },
 		"error": null
+	},
+	{
+		"name": "pypi trailing separator",
+		"input": { "name": "my_package_", "ecosystem": "pypi" },
+		"expected": { "normalized": "my-package" },
+		"error": null
 	}
 ]

@@ -36,6 +36,9 @@ pub enum DepotError {
     #[error("adapter error: {0}")]
     Adapter(String),
 
+    #[error("lockfile error: {0}")]
+    Lockfile(String),
+
     #[error("schema validation error: {0}")]
     SchemaValidation(String),
 

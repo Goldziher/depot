@@ -40,11 +40,11 @@ pub struct LockedArtifact {
 
 impl LockFile {
     pub fn to_toml(&self) -> Result<String> {
-        toml::to_string_pretty(self).map_err(|e| DepotError::Config(e.to_string()))
+        toml::to_string_pretty(self).map_err(|e| DepotError::Lockfile(e.to_string()))
     }
 
-    pub fn from_toml(s: &str) -> std::result::Result<Self, toml::de::Error> {
-        toml::from_str(s)
+    pub fn from_toml(s: &str) -> Result<Self> {
+        Ok(toml::from_str(s)?)
     }
 
     /// Find a locked package by ecosystem and name.

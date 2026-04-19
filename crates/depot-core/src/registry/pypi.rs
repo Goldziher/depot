@@ -31,6 +31,10 @@ pub struct PypiFile {
     pub size: Option<u64>,
     #[serde(rename = "upload-time")]
     pub upload_time: Option<String>,
+    #[serde(rename = "dist-info-metadata", default)]
+    pub dist_info_metadata: Option<serde_json::Value>,
+    #[serde(rename = "gpg-sig", default)]
+    pub gpg_sig: Option<bool>,
 }
 
 /// Yanked can be `false`, `true`, or a reason string.

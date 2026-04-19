@@ -83,12 +83,21 @@ fn default_true() -> bool {
     true
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct AuthConfig {
     #[serde(default)]
     pub enabled: bool,
     #[serde(default)]
     pub tokens: Vec<String>,
+}
+
+impl std::fmt::Debug for AuthConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AuthConfig")
+            .field("enabled", &self.enabled)
+            .field("tokens", &format!("[{} redacted]", self.tokens.len()))
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
@@ -119,6 +128,7 @@ impl Config {
             if p.exists() {
                 return Self::load_from(&p);
             }
+            return Err(DepotError::ConfigNotFound(p));
         }
 
         let local = PathBuf::from("depot.toml");

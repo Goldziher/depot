@@ -22,3 +22,6 @@ depot-core.workspace = true
 opendal.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true }

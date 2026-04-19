@@ -424,7 +424,6 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
- "serde",
  "wasm-bindgen",
  "windows-link",
 ]
@@ -666,11 +665,9 @@ dependencies = [
 name = "depot-core"
 version = "0.1.0"
 dependencies = [
- "ahash",
  "async-trait",
  "blake3",
  "bytes",
- "chrono",
  "jsonschema",
  "memchr",
  "schemars",
@@ -679,7 +676,6 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.18",
  "toml",
- "tracing",
 ]
 
 [[package]]
@@ -705,6 +701,7 @@ dependencies = [
  "depot-core",
  "opendal",
  "thiserror 2.0.18",
+ "tokio",
  "tracing",
 ]
 

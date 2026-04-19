@@ -5,27 +5,21 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
-[package.metadata.cargo-machete]
-ignored = ["ahash", "chrono", "jsonschema", "tracing"]
-
 [features]
 default = []
 encryption = []
 
 [dependencies]
-ahash.workspace = true
 async-trait.workspace = true
 blake3.workspace = true
 bytes.workspace = true
-chrono.workspace = true
-jsonschema.workspace = true
 memchr.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 toml.workspace = true
-tracing.workspace = true
 
 [dev-dependencies]
+jsonschema.workspace = true
 tempfile.workspace = true

@@ -4,31 +4,28 @@ use serde::{Deserialize, Serialize};
 use crate::error::{DepotError, Result};
 use crate::package::VersionMetadata;
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum VulnSeverity {
+    Low,
+    Medium,
+    High,
+    #[default]
+    Critical,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct PolicyConfig {
     #[serde(default)]
     pub block_unlicensed: bool,
-    #[serde(default = "default_max_severity")]
-    pub max_vuln_severity: String,
+    #[serde(default)]
+    pub max_vuln_severity: VulnSeverity,
     #[serde(default)]
     pub allowed_licenses: Vec<String>,
     #[serde(default)]
     pub blocked_packages: Vec<String>,
-}
-
-fn default_max_severity() -> String {
-    "critical".into()
-}
-
-impl Default for PolicyConfig {
-    fn default() -> Self {
-        Self {
-            block_unlicensed: false,
-            max_vuln_severity: default_max_severity(),
-            allowed_licenses: Vec::new(),
-            blocked_packages: Vec::new(),
-        }
-    }
 }
 
 impl PolicyConfig {
@@ -84,8 +81,8 @@ mod tests {
             block_unlicensed: p["block_unlicensed"].as_bool().unwrap_or(false),
             max_vuln_severity: p["max_vuln_severity"]
                 .as_str()
-                .unwrap_or("critical")
-                .to_string(),
+                .map(|s| serde_json::from_value(serde_json::Value::String(s.to_string())).unwrap())
+                .unwrap_or_default(),
             allowed_licenses: p["allowed_licenses"]
                 .as_array()
                 .map(|a| {
