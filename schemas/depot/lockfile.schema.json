@@ -1,0 +1,53 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Depot Lock File",
+	"description": "Schema for depot-lock.toml",
+	"type": "object",
+	"required": ["metadata"],
+	"properties": {
+		"metadata": {
+			"type": "object",
+			"required": ["schema_version", "generated_at", "depot_version"],
+			"properties": {
+				"schema_version": { "type": "integer", "minimum": 1 },
+				"generated_at": { "type": "string", "format": "date-time" },
+				"depot_version": { "type": "string" }
+			}
+		},
+		"packages": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": [
+					"ecosystem",
+					"name",
+					"version",
+					"artifacts",
+					"resolved_from"
+				],
+				"properties": {
+					"ecosystem": {
+						"type": "string",
+						"enum": ["pypi", "npm", "cargo", "hex"]
+					},
+					"name": { "type": "string" },
+					"version": { "type": "string" },
+					"artifacts": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"required": ["filename", "blake3", "size"],
+							"properties": {
+								"filename": { "type": "string" },
+								"blake3": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+								"size": { "type": "integer", "minimum": 0 }
+							}
+						}
+					},
+					"resolved_from": { "type": "string" },
+					"pinned": { "type": "boolean", "default": false }
+				}
+			}
+		}
+	}
+}

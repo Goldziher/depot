@@ -1,89 +1,183 @@
-# Depot Architecture
+# Architecture
 
 ## Overview
 
-Depot is a self-hosted, armored universal package registry. It acts as a pull-through cache and policy enforcement layer between package manager clients (pip, npm, cargo, mix) and their upstream registries (PyPI, npmjs, crates.io, hex.pm).
-
-Clients configure their package manager to point at a depot instance. Depot speaks each registry's native protocol, so no client-side tooling changes are needed beyond the registry URL.
+Depot is a self-hosted, armored universal package registry. It acts as a pull-through cache and policy enforcement layer between package manager clients and upstream registries.
 
 ## Hexagonal Architecture
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│                      Tower Middleware                         │
-│  (tracing, CORS, rate limiting, auth, compression)           │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│   ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐          │
-│   │  PyPI   │ │   npm   │ │  Cargo  │ │   Hex   │          │
-│   │ Adapter │ │ Adapter │ │ Adapter │ │ Adapter │          │
-│   └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘          │
-│        │           │           │           │                 │
-│        └───────────┴─────┬─────┴───────────┘                 │
-│                          │                                   │
-│              ┌───────────▼───────────┐                       │
-│              │    PackageService     │  ◄── Inbound Port     │
-│              │  (core domain logic)  │                       │
-│              └───┬───────────────┬───┘                       │
-│                  │               │                           │
-│        ┌─────────▼──┐    ┌──────▼────────┐                   │
-│        │ StoragePort │    │UpstreamClient │  ◄── Outbound     │
-│        └─────────┬──┘    └──────┬────────┘      Ports        │
-│                  │              │                             │
-├──────────────────┼──────────────┼────────────────────────────┤
-│                  │              │                             │
-│         ┌────────▼──┐    ┌─────▼──────┐                      │
-│         │  OpenDAL  │    │  Upstream   │                      │
-│         │  Storage  │    │  HTTP       │                      │
-│         │ (fs/S3/…) │    │  Clients   │                      │
-│         └───────────┘    └────────────┘                      │
-└──────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Clients
+        pip[pip]
+        npm_cli[npm]
+        cargo_cli[cargo]
+        mix[mix]
+    end
+
+    subgraph "Tower Middleware"
+        trace[TraceLayer]
+        cors[CorsLayer]
+        auth[AuthLayer]
+        compress[CompressionLayer]
+    end
+
+    subgraph "Inbound Adapters"
+        pypi_adapter[PyPI Adapter<br/>PEP 503/691]
+        npm_adapter[npm Adapter<br/>Registry API]
+        cargo_adapter[Cargo Adapter<br/>Sparse Index]
+        hex_adapter[Hex Adapter<br/>Repository API]
+    end
+
+    subgraph "Core Domain"
+        svc[PackageService]
+        policy[Policy Engine]
+        integrity[Blake3 Integrity]
+        lockfile[Lock File]
+    end
+
+    subgraph "Outbound Adapters"
+        storage[StoragePort<br/>OpenDAL]
+        upstream_pypi[PyPI Upstream]
+        upstream_npm[npm Upstream]
+        upstream_cargo[Cargo Upstream]
+        upstream_hex[Hex Upstream]
+    end
+
+    subgraph "Storage Backends"
+        fs[Filesystem]
+        s3[S3 / MinIO]
+        gcs[GCS]
+    end
+
+    pip --> trace
+    npm_cli --> trace
+    cargo_cli --> trace
+    mix --> trace
+
+    trace --> cors --> auth --> compress
+
+    compress --> pypi_adapter
+    compress --> npm_adapter
+    compress --> cargo_adapter
+    compress --> hex_adapter
+
+    pypi_adapter --> svc
+    npm_adapter --> svc
+    cargo_adapter --> svc
+    hex_adapter --> svc
+
+    svc --> policy
+    svc --> integrity
+    svc --> lockfile
+    svc --> storage
+    svc --> upstream_pypi
+    svc --> upstream_npm
+    svc --> upstream_cargo
+    svc --> upstream_hex
+
+    storage --> fs
+    storage --> s3
+    storage --> gcs
 ```
 
 ## Request Flow
 
-1. Client sends a request in the native protocol (e.g. `pip install --index-url http://depot/pypi/simple/ requests`)
-2. The protocol adapter translates the request into a `PackageService` call
-3. `PackageService` checks local storage for the artifact
-4. If not cached: fetches from upstream via `UpstreamClient`, verifies integrity (blake3), applies policy checks, stores via `StoragePort`
-5. Returns the artifact to the adapter, which formats the response in the native protocol
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Adapter
+    participant PackageService
+    participant Storage
+    participant Upstream
 
-## Crate Structure
+    Client->>Adapter: GET /pypi/simple/requests/
+    Adapter->>PackageService: list_versions(PyPI, "requests")
+
+    PackageService->>Storage: exists("pypi/requests/...")
+    alt Cached
+        Storage-->>PackageService: true
+        PackageService->>Storage: get("pypi/requests/...")
+        Storage-->>PackageService: artifact data
+    else Not cached
+        PackageService->>Upstream: fetch_versions("requests")
+        Upstream-->>PackageService: version list
+        PackageService->>Upstream: fetch_artifact(artifact_id)
+        Upstream-->>PackageService: artifact bytes
+        PackageService->>PackageService: verify blake3
+        PackageService->>PackageService: check policy
+        PackageService->>Storage: put(key, data)
+    end
+
+    PackageService-->>Adapter: VersionMetadata
+    Adapter-->>Client: PEP 691 JSON response
+```
+
+## Crate Dependencies
+
+```mermaid
+graph LR
+    cli[depot-cli] --> server[depot-server]
+    server --> adapters[depot-adapters]
+    server --> storage[depot-storage]
+    adapters --> core[depot-core]
+    storage --> core
+```
 
 | Crate | Purpose |
 |-------|---------|
-| `depot-core` | Domain types, port traits (`PackageService`, `StoragePort`, `UpstreamClient`), integrity (blake3), policy engine, lock file format, config |
-| `depot-storage` | `StoragePort` implementation via OpenDAL. Feature-gated backends: fs, S3, GCS, memory |
-| `depot-adapters` | Inbound adapters (axum routers per protocol) + outbound upstream clients. Feature-gated per ecosystem |
-| `depot-server` | Axum application assembly, Tower middleware stack, shared state |
-| `depot-cli` | Binary crate. CLI (clap) with commands: `serve`, `sync`, `lock`, `config` |
-
-Dependency flow: `depot-cli → depot-server → depot-adapters → depot-core`, `depot-server → depot-storage → depot-core`
+| `depot-core` | Domain types, port traits, blake3 integrity, policy, lockfile, config, registry schemas |
+| `depot-storage` | `StoragePort` via OpenDAL — feature-gated backends (fs, S3, GCS, memory) |
+| `depot-adapters` | Protocol adapters (axum routers) + upstream clients — feature-gated per ecosystem |
+| `depot-server` | Axum app assembly, Tower middleware stack, shared `AppState` |
+| `depot-cli` | Binary crate, clap CLI: `serve`, `sync`, `lock`, `config` |
 
 ## Storage Key Scheme
 
-Artifacts are stored with the key: `<ecosystem>/<name>/<version>/<filename>`
+```text
+<ecosystem>/<name>/<version>/<filename>
+```
 
 Examples:
 
 - `pypi/requests/2.31.0/requests-2.31.0.tar.gz`
 - `npm/lodash/4.17.21/lodash-4.17.21.tgz`
 - `cargo/serde/1.0.200/serde-1.0.200.crate`
+- `hex/phoenix/1.7.12/phoenix-1.7.12.tar`
 
-## Lock File
+## Registry Protocol Support
 
-Depot uses its own TOML-based lock file (`depot-lock.toml`) with blake3 hashes for integrity verification. The format is ecosystem-agnostic — a single lock file can pin packages across all supported ecosystems. See [ADR-0004](adr/0004-blake3-lockfile.md).
+| Protocol | Spec | Endpoints | Format |
+|----------|------|-----------|--------|
+| PyPI | PEP 503/691 | `/pypi/simple/<name>/` | JSON (PEP 691) |
+| npm | Registry API | `/npm/<package>` | JSON |
+| Cargo | Sparse Index (RFC 2789) | `/cargo/index/<prefix>/<name>` | NDJSON |
+| Hex | Repository API | `/hex/packages/<name>` | JSON / Protobuf |
 
-## Feature Flags
+## JSON Schemas
 
-Compile-time feature flags allow minimal builds. See [ADR-0006](adr/0006-feature-flags.md).
+Canonical schemas for all registry protocols and depot's own formats live in `schemas/`:
 
-## Adding a New Protocol Adapter
+```text
+schemas/
+├── registries/
+│   ├── pypi.schema.json
+│   ├── npm.schema.json
+│   ├── cargo.schema.json
+│   └── hex.schema.json
+└── depot/
+    ├── config.schema.json
+    └── lockfile.schema.json
+```
 
-1. Create a module under `depot-adapters/src/<protocol>/` with `mod.rs`, `models.rs`, `upstream.rs`
-2. Implement an axum `Router` that translates protocol requests into `PackageService` calls
-3. Implement `UpstreamClient` for fetching from the upstream registry
-4. Add a feature flag in `depot-adapters/Cargo.toml`
-5. Register the router in `depot-server/src/app.rs`
+Registry types derive `JsonSchema` via `schemars` and are validated at runtime with `jsonschema`.
 
-No changes to core types or traits required.
+## ADRs
+
+- [0001 — Hexagonal Architecture](adr/0001-hexagonal-architecture.md)
+- [0002 — Tower Middleware](adr/0002-tower-middleware.md)
+- [0003 — OpenDAL Storage](adr/0003-opendal-storage.md)
+- [0004 — Blake3 & Lock File](adr/0004-blake3-lockfile.md)
+- [0005 — Protocol Adapters](adr/0005-protocol-adapters.md)
+- [0006 — Feature Flags](adr/0006-feature-flags.md)
+- [0007 — JSON Schema Validation](adr/0007-json-schema-validation.md)

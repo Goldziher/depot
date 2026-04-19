@@ -1,0 +1,53 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Cargo Sparse Index Entry",
+	"description": "Single version entry in a Cargo sparse index file (newline-delimited JSON)",
+	"type": "object",
+	"required": ["name", "vers", "deps", "cksum", "features", "yanked"],
+	"properties": {
+		"name": { "type": "string", "description": "Crate name" },
+		"vers": { "type": "string", "description": "Semver version" },
+		"deps": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": [
+					"name",
+					"req",
+					"features",
+					"optional",
+					"default_features",
+					"target",
+					"kind"
+				],
+				"properties": {
+					"name": { "type": "string" },
+					"req": { "type": "string", "description": "Version requirement" },
+					"features": { "type": "array", "items": { "type": "string" } },
+					"optional": { "type": "boolean" },
+					"default_features": { "type": "boolean" },
+					"target": { "type": ["string", "null"] },
+					"kind": { "type": "string", "enum": ["normal", "dev", "build"] },
+					"registry": { "type": ["string", "null"] },
+					"package": { "type": ["string", "null"] }
+				}
+			}
+		},
+		"cksum": {
+			"type": "string",
+			"description": "SHA256 checksum of .crate file"
+		},
+		"features": {
+			"type": "object",
+			"additionalProperties": { "type": "array", "items": { "type": "string" } }
+		},
+		"features2": {
+			"type": "object",
+			"additionalProperties": { "type": "array", "items": { "type": "string" } }
+		},
+		"yanked": { "type": "boolean" },
+		"links": { "type": ["string", "null"] },
+		"v": { "type": "integer", "description": "Index schema version" },
+		"rust_version": { "type": ["string", "null"] }
+	}
+}

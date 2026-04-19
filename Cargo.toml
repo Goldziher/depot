@@ -6,6 +6,7 @@ members = [
     "crates/depot-core",
     "crates/depot-server",
     "crates/depot-storage",
+    "tools/test-generator",
 ]
 
 [workspace.package]
@@ -14,6 +15,9 @@ edition = "2024"
 license = "BUSL-1.1"
 
 [workspace.dependencies]
+
+# Fast hashing
+ahash = "0.8"
 
 # Async traits
 async-trait = "0.1"
@@ -39,25 +43,37 @@ depot-core = { path = "crates/depot-core" }
 depot-server = { path = "crates/depot-server" }
 depot-storage = { path = "crates/depot-storage" }
 
+# JSON schema validation
+jsonschema = "0.46"
+
+# Fast byte scanning
+memchr = "2"
+
 # Storage
-opendal = "0.51"
+opendal = "0.55"
 
 # HTTP client
-reqwest = { version = "0.12", default-features = false, features = [
-    "rustls-tls",
+reqwest = { version = "0.13", default-features = false, features = [
+    "rustls",
     "json",
     "stream",
 ] }
+
+# JSON schema generation
+schemars = "1.2"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# Testing
+tempfile = "3"
+
 # Error handling
 thiserror = "2"
 # Async runtime
 tokio = { version = "1", features = ["full"] }
-toml = "0.8"
+toml = "1.1"
 tower = { version = "0.5", features = ["full"] }
 tower-http = { version = "0.6", features = [
     "cors",

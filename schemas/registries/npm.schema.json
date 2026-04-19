@@ -1,0 +1,71 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "npm Registry Packument",
+	"description": "Package metadata response from npm registry",
+	"type": "object",
+	"required": ["name", "versions"],
+	"properties": {
+		"name": { "type": "string" },
+		"description": { "type": "string" },
+		"dist-tags": {
+			"type": "object",
+			"additionalProperties": { "type": "string" }
+		},
+		"versions": {
+			"type": "object",
+			"additionalProperties": {
+				"type": "object",
+				"required": ["name", "version", "dist"],
+				"properties": {
+					"name": { "type": "string" },
+					"version": { "type": "string" },
+					"description": { "type": "string" },
+					"license": { "type": ["string", "null"] },
+					"dependencies": {
+						"type": "object",
+						"additionalProperties": { "type": "string" }
+					},
+					"devDependencies": {
+						"type": "object",
+						"additionalProperties": { "type": "string" }
+					},
+					"dist": {
+						"type": "object",
+						"required": ["tarball", "shasum"],
+						"properties": {
+							"tarball": { "type": "string", "format": "uri" },
+							"shasum": { "type": "string" },
+							"integrity": { "type": "string" },
+							"fileCount": { "type": "integer" },
+							"unpackedSize": { "type": "integer" }
+						}
+					}
+				}
+			}
+		},
+		"time": {
+			"type": "object",
+			"additionalProperties": { "type": "string" }
+		},
+		"author": {
+			"oneOf": [
+				{ "type": "string" },
+				{
+					"type": "object",
+					"properties": {
+						"name": { "type": "string" },
+						"email": { "type": "string" }
+					}
+				}
+			]
+		},
+		"repository": {
+			"type": "object",
+			"properties": {
+				"type": { "type": "string" },
+				"url": { "type": "string" }
+			}
+		},
+		"readme": { "type": "string" }
+	}
+}

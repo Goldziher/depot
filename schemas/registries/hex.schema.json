@@ -1,0 +1,48 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Hex.pm Package",
+	"description": "Package metadata from Hex.pm HTTP API",
+	"type": "object",
+	"required": ["name", "releases"],
+	"properties": {
+		"name": { "type": "string" },
+		"url": { "type": "string", "format": "uri" },
+		"html_url": { "type": "string", "format": "uri" },
+		"docs_html_url": { "type": ["string", "null"], "format": "uri" },
+		"meta": {
+			"type": "object",
+			"properties": {
+				"description": { "type": "string" },
+				"licenses": { "type": "array", "items": { "type": "string" } },
+				"links": {
+					"type": "object",
+					"additionalProperties": { "type": "string" }
+				},
+				"maintainers": { "type": "array", "items": { "type": "string" } }
+			}
+		},
+		"releases": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["version", "url"],
+				"properties": {
+					"version": { "type": "string" },
+					"url": { "type": "string", "format": "uri" },
+					"has_docs": { "type": "boolean" },
+					"inserted_at": { "type": "string", "format": "date-time" },
+					"updated_at": { "type": "string", "format": "date-time" },
+					"retirement": {
+						"type": ["object", "null"],
+						"properties": {
+							"reason": { "type": "string" },
+							"message": { "type": ["string", "null"] }
+						}
+					}
+				}
+			}
+		},
+		"inserted_at": { "type": "string", "format": "date-time" },
+		"updated_at": { "type": "string", "format": "date-time" }
+	}
+}

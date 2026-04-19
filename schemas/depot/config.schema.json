@@ -1,0 +1,72 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Depot Configuration",
+	"description": "Configuration file schema for depot (depot.toml)",
+	"type": "object",
+	"properties": {
+		"server": {
+			"type": "object",
+			"properties": {
+				"bind": { "type": "string", "default": "0.0.0.0:8080" }
+			}
+		},
+		"storage": {
+			"type": "object",
+			"properties": {
+				"backend": {
+					"type": "string",
+					"enum": ["fs", "s3", "gcs", "memory"],
+					"default": "fs"
+				},
+				"path": { "type": ["string", "null"] },
+				"s3": {
+					"type": ["object", "null"],
+					"properties": {
+						"bucket": { "type": "string" },
+						"region": { "type": "string" },
+						"endpoint": { "type": ["string", "null"] }
+					},
+					"required": ["bucket", "region"]
+				}
+			}
+		},
+		"upstream": {
+			"type": "object",
+			"additionalProperties": {
+				"type": "object",
+				"required": ["url"],
+				"properties": {
+					"enabled": { "type": "boolean", "default": true },
+					"url": { "type": "string", "format": "uri" }
+				}
+			}
+		},
+		"policies": {
+			"type": "object",
+			"properties": {
+				"block_unlicensed": { "type": "boolean", "default": false },
+				"max_vuln_severity": {
+					"type": "string",
+					"enum": ["low", "medium", "high", "critical"],
+					"default": "critical"
+				},
+				"allowed_licenses": { "type": "array", "items": { "type": "string" } },
+				"blocked_packages": { "type": "array", "items": { "type": "string" } }
+			}
+		},
+		"auth": {
+			"type": "object",
+			"properties": {
+				"enabled": { "type": "boolean", "default": false },
+				"tokens": { "type": "array", "items": { "type": "string" } }
+			}
+		},
+		"encryption": {
+			"type": "object",
+			"properties": {
+				"enabled": { "type": "boolean", "default": false },
+				"key_file": { "type": ["string", "null"] }
+			}
+		}
+	}
+}

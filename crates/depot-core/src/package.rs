@@ -1,7 +1,13 @@
+use std::borrow::Cow;
+use std::str::FromStr;
+
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::error::DepotError;
+
 /// Supported package ecosystems.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum Ecosystem {
     PyPI,
@@ -21,10 +27,28 @@ impl std::fmt::Display for Ecosystem {
     }
 }
 
+impl FromStr for Ecosystem {
+    type Err = DepotError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "pypi" => Ok(Self::PyPI),
+            "npm" => Ok(Self::Npm),
+            "cargo" | "crates" => Ok(Self::Cargo),
+            "hex" => Ok(Self::Hex),
+            _ => Err(DepotError::Config(format!("unknown ecosystem: {s}"))),
+        }
+    }
+}
+
 /// A normalized package name.
 ///
-/// Canonicalizes names across ecosystems (e.g. underscores → hyphens for PyPI).
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// Canonicalizes names across ecosystems:
+/// - PyPI: PEP 503 — lowercase, replace runs of `.`/`-`/`_` with single `-`
+/// - npm: lowercase (preserving scope `@scope/name`)
+/// - Cargo: lowercase
+/// - Hex: lowercase
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct PackageName(String);
 
 impl PackageName {
@@ -36,13 +60,59 @@ impl PackageName {
         &self.0
     }
 
-    /// Normalize for a specific ecosystem.
-    pub fn normalized(&self, ecosystem: Ecosystem) -> String {
+    /// Normalize for a specific ecosystem, returning `Cow::Borrowed` when no
+    /// transformation is needed (zero-alloc fast path).
+    pub fn normalized(&self, ecosystem: Ecosystem) -> Cow<'_, str> {
         match ecosystem {
-            Ecosystem::PyPI => self.0.to_lowercase().replace('_', "-"),
-            _ => self.0.clone(),
+            Ecosystem::PyPI => Cow::Owned(normalize_pypi(&self.0)),
+            Ecosystem::Npm => normalize_npm(&self.0),
+            Ecosystem::Cargo | Ecosystem::Hex => {
+                if self
+                    .0
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || !b.is_ascii_alphabetic())
+                {
+                    Cow::Borrowed(&self.0)
+                } else {
+                    Cow::Owned(self.0.to_ascii_lowercase())
+                }
+            }
         }
     }
+}
+
+/// PEP 503: lowercase, replace runs of `.`, `-`, `_` with a single `-`.
+fn normalize_pypi(name: &str) -> String {
+    let lower = name.to_ascii_lowercase();
+    // Fast path: check if any separator chars exist using memchr
+    if memchr::memchr3(b'.', b'-', b'_', lower.as_bytes()).is_none() {
+        return lower;
+    }
+    let mut result = String::with_capacity(lower.len());
+    let mut prev_sep = false;
+    for c in lower.chars() {
+        if c == '.' || c == '-' || c == '_' {
+            if !prev_sep {
+                result.push('-');
+                prev_sep = true;
+            }
+        } else {
+            result.push(c);
+            prev_sep = false;
+        }
+    }
+    result
+}
+
+/// npm: lowercase, but preserve `@scope/` prefix.
+fn normalize_npm(name: &str) -> Cow<'_, str> {
+    if name
+        .bytes()
+        .all(|b| b.is_ascii_lowercase() || !b.is_ascii_alphabetic())
+    {
+        return Cow::Borrowed(name);
+    }
+    Cow::Owned(name.to_ascii_lowercase())
 }
 
 impl std::fmt::Display for PackageName {
@@ -52,7 +122,7 @@ impl std::fmt::Display for PackageName {
 }
 
 /// Uniquely identifies an artifact in storage.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct ArtifactId {
     pub ecosystem: Ecosystem,
     pub name: PackageName,
@@ -61,17 +131,26 @@ pub struct ArtifactId {
 }
 
 impl ArtifactId {
-    /// Storage key for this artifact: `<ecosystem>/<name>/<version>/<filename>`
+    /// Storage key: `<ecosystem>/<name>/<version>/<filename>`
     pub fn storage_key(&self) -> String {
-        format!(
-            "{}/{}/{}/{}",
-            self.ecosystem, self.name, self.version, self.filename
-        )
+        let eco = self.ecosystem.to_string();
+        let name = self.name.as_str();
+        // Pre-calculate capacity: eco + / + name + / + version + / + filename
+        let cap = eco.len() + 1 + name.len() + 1 + self.version.len() + 1 + self.filename.len();
+        let mut key = String::with_capacity(cap);
+        key.push_str(&eco);
+        key.push('/');
+        key.push_str(name);
+        key.push('/');
+        key.push_str(&self.version);
+        key.push('/');
+        key.push_str(&self.filename);
+        key
     }
 }
 
 /// Metadata for a specific package version.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct VersionMetadata {
     pub name: PackageName,
     pub version: String,
@@ -81,16 +160,145 @@ pub struct VersionMetadata {
 }
 
 /// Summary info for a version (used in listings).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct VersionInfo {
     pub version: String,
     pub yanked: bool,
 }
 
 /// Digest of a single artifact file.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ArtifactDigest {
     pub filename: String,
     pub blake3: String,
     pub size: u64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn load_fixtures(path: &str) -> Vec<serde_json::Value> {
+        let full = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("testing_data")
+            .join(path);
+        let content = std::fs::read_to_string(&full).unwrap();
+        serde_json::from_str(&content).unwrap()
+    }
+
+    #[test]
+    fn normalization_fixtures() {
+        let fixtures = load_fixtures("package/01_pypi_normalization.json");
+        for fix in &fixtures {
+            let name = fix["input"]["name"].as_str().unwrap();
+            let eco_str = fix["input"]["ecosystem"].as_str().unwrap();
+            let expected = fix["expected"]["normalized"].as_str().unwrap();
+
+            let eco: Ecosystem = eco_str.parse().unwrap();
+            let pkg = PackageName::new(name);
+            let normalized = pkg.normalized(eco);
+            assert_eq!(
+                normalized.as_ref(),
+                expected,
+                "fixture '{}': normalized({name}, {eco}) = {normalized}, expected {expected}",
+                fix["name"].as_str().unwrap_or("?")
+            );
+        }
+    }
+
+    #[test]
+    fn storage_key_fixtures() {
+        let fixtures = load_fixtures("package/02_storage_keys.json");
+        for fix in &fixtures {
+            let eco_str = fix["input"]["ecosystem"].as_str().unwrap();
+            let name = fix["input"]["name"].as_str().unwrap();
+            let version = fix["input"]["version"].as_str().unwrap();
+            let filename = fix["input"]["filename"].as_str().unwrap();
+            let expected = fix["expected"]["key"].as_str().unwrap();
+
+            let eco: Ecosystem = eco_str.parse().unwrap();
+            let artifact = ArtifactId {
+                ecosystem: eco,
+                name: PackageName::new(name),
+                version: version.to_string(),
+                filename: filename.to_string(),
+            };
+            assert_eq!(
+                artifact.storage_key(),
+                expected,
+                "fixture '{}'",
+                fix["name"].as_str().unwrap_or("?")
+            );
+        }
+    }
+
+    #[test]
+    fn ecosystem_from_str() {
+        assert_eq!("pypi".parse::<Ecosystem>().unwrap(), Ecosystem::PyPI);
+        assert_eq!("npm".parse::<Ecosystem>().unwrap(), Ecosystem::Npm);
+        assert_eq!("cargo".parse::<Ecosystem>().unwrap(), Ecosystem::Cargo);
+        assert_eq!("crates".parse::<Ecosystem>().unwrap(), Ecosystem::Cargo);
+        assert_eq!("hex".parse::<Ecosystem>().unwrap(), Ecosystem::Hex);
+        assert_eq!("PYPI".parse::<Ecosystem>().unwrap(), Ecosystem::PyPI);
+        assert!("unknown".parse::<Ecosystem>().is_err());
+    }
+
+    #[test]
+    fn ecosystem_parsing_fixtures() {
+        let fixtures = load_fixtures("package/03_ecosystem_parsing.json");
+        for fix in &fixtures {
+            let input = fix["input"]["value"].as_str().unwrap();
+            let error = fix["error"].as_str();
+
+            let result = input.parse::<Ecosystem>();
+            match error {
+                Some(expected_err) => {
+                    let err = result.expect_err(&format!(
+                        "fixture '{}': expected error for input '{input}'",
+                        fix["name"].as_str().unwrap_or("?")
+                    ));
+                    assert!(
+                        err.to_string().contains(expected_err),
+                        "fixture '{}': error '{err}' should contain '{expected_err}'",
+                        fix["name"].as_str().unwrap_or("?")
+                    );
+                }
+                None => {
+                    let eco = result.unwrap_or_else(|e| {
+                        panic!(
+                            "fixture '{}': unexpected error for input '{input}': {e}",
+                            fix["name"].as_str().unwrap_or("?")
+                        )
+                    });
+                    let expected = fix["expected"]["ecosystem"].as_str().unwrap();
+                    assert_eq!(
+                        eco.to_string(),
+                        expected,
+                        "fixture '{}': parse('{input}') = {eco}, expected {expected}",
+                        fix["name"].as_str().unwrap_or("?")
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn pypi_normalization_pep503() {
+        // PEP 503 specific: runs of separators collapse to single hyphen
+        let pkg = PackageName::new("My..Cool--Package__Name");
+        assert_eq!(
+            pkg.normalized(Ecosystem::PyPI).as_ref(),
+            "my-cool-package-name"
+        );
+    }
+
+    #[test]
+    fn normalized_cow_borrows_when_unchanged() {
+        let pkg = PackageName::new("serde_json");
+        let cow = pkg.normalized(Ecosystem::Cargo);
+        assert!(
+            matches!(cow, Cow::Borrowed(_)),
+            "should borrow when already lowercase"
+        );
+    }
 }

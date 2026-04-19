@@ -30,6 +30,16 @@ tasks:
     cmds:
       - npx -y ai-rulez@latest generate
 
+  test:generate:
+    desc: Generate integration tests from fixtures
+    cmds:
+      - cargo run -p depot-test-generator -- --fixtures crates/depot-core/testing_data --output crates/depot-core/tests/generated_tests.rs
+
+  test:all:
+    desc: Run all tests
+    cmds:
+      - cargo test --workspace
+
   update:
     desc: Update all dependencies and tools
     cmds:

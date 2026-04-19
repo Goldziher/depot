@@ -1,0 +1,48 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "PyPI Simple Repository API (PEP 691)",
+	"description": "JSON response format for PEP 691 Simple Repository API v1",
+	"type": "object",
+	"required": ["meta", "name", "files"],
+	"properties": {
+		"meta": {
+			"type": "object",
+			"required": ["api-version"],
+			"properties": {
+				"api-version": { "type": "string", "const": "1.0" }
+			}
+		},
+		"name": { "type": "string", "description": "Normalized project name" },
+		"versions": {
+			"type": "array",
+			"items": { "type": "string" },
+			"description": "Available versions"
+		},
+		"files": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["filename", "url", "hashes"],
+				"properties": {
+					"filename": { "type": "string" },
+					"url": { "type": "string", "format": "uri" },
+					"hashes": {
+						"type": "object",
+						"properties": {
+							"sha256": { "type": "string" },
+							"md5": { "type": "string" }
+						}
+					},
+					"requires-python": { "type": ["string", "null"] },
+					"yanked": { "oneOf": [{ "type": "boolean" }, { "type": "string" }] },
+					"dist-info-metadata": {
+						"oneOf": [{ "type": "boolean" }, { "type": "object" }]
+					},
+					"gpg-sig": { "type": ["boolean", "null"] },
+					"size": { "type": "integer", "minimum": 0 },
+					"upload-time": { "type": ["string", "null"], "format": "date-time" }
+				}
+			}
+		}
+	}
+}

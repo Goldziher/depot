@@ -30,6 +30,7 @@ impl StoragePort for OpenDalStorage {
         self.operator
             .write(key, data)
             .await
+            .map(|_| ())
             .map_err(|e| DepotError::Storage(e.to_string()))
     }
 

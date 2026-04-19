@@ -36,6 +36,9 @@ pub enum DepotError {
     #[error("adapter error: {0}")]
     Adapter(String),
 
+    #[error("schema validation error: {0}")]
+    SchemaValidation(String),
+
     #[error(transparent)]
     Io(#[from] std::io::Error),
 
