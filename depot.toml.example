@@ -1,0 +1,44 @@
+# Depot configuration
+# Copy to depot.toml or set DEPOT_CONFIG env var
+
+[server]
+bind = "0.0.0.0:8080"
+
+[storage]
+backend = "fs"            # fs | s3 | gcs | memory
+path = "/var/lib/depot"
+
+# [storage.s3]
+# bucket = "depot-packages"
+# region = "us-east-1"
+# endpoint = "https://s3.amazonaws.com"
+
+[upstream.pypi]
+enabled = true
+url = "https://pypi.org"
+
+[upstream.npm]
+enabled = true
+url = "https://registry.npmjs.org"
+
+[upstream.cargo]
+enabled = true
+url = "https://index.crates.io"
+
+[upstream.hex]
+enabled = true
+url = "https://hex.pm"
+
+[policies]
+block_unlicensed = false
+max_vuln_severity = "critical"   # low | medium | high | critical
+allowed_licenses = []            # empty = allow all
+blocked_packages = []
+
+[auth]
+enabled = false
+tokens = []
+
+[encryption]
+enabled = false
+# key_file = "/etc/depot/key"

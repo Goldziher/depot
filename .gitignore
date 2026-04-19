@@ -1,0 +1,7 @@
+/target
+
+# AI Rules generated files
+.claude/
+AGENTS.md
+CLAUDE.md
+.codex/

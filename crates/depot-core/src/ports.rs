@@ -1,0 +1,62 @@
+use async_trait::async_trait;
+use bytes::Bytes;
+
+use crate::error::Result;
+use crate::package::{ArtifactId, Ecosystem, PackageName, VersionInfo, VersionMetadata};
+
+// ---------------------------------------------------------------------------
+// Inbound port: the core service that protocol adapters call into
+// ---------------------------------------------------------------------------
+
+#[async_trait]
+pub trait PackageService: Send + Sync {
+    /// List all versions of a package.
+    async fn list_versions(
+        &self,
+        ecosystem: Ecosystem,
+        name: &PackageName,
+    ) -> Result<Vec<VersionInfo>>;
+
+    /// Get metadata for a specific version.
+    async fn get_version_metadata(
+        &self,
+        ecosystem: Ecosystem,
+        name: &PackageName,
+        version: &str,
+    ) -> Result<VersionMetadata>;
+
+    /// Download an artifact.
+    async fn get_artifact(&self, artifact_id: &ArtifactId) -> Result<Bytes>;
+}
+
+// ---------------------------------------------------------------------------
+// Outbound port: storage
+// ---------------------------------------------------------------------------
+
+#[async_trait]
+pub trait StoragePort: Send + Sync {
+    async fn get(&self, key: &str) -> Result<Option<Bytes>>;
+    async fn put(&self, key: &str, data: Bytes) -> Result<()>;
+    async fn exists(&self, key: &str) -> Result<bool>;
+    async fn delete(&self, key: &str) -> Result<()>;
+    async fn list_prefix(&self, prefix: &str) -> Result<Vec<String>>;
+}
+
+// ---------------------------------------------------------------------------
+// Outbound port: upstream registry client
+// ---------------------------------------------------------------------------
+
+#[async_trait]
+pub trait UpstreamClient: Send + Sync {
+    /// Which ecosystem this client fetches from.
+    fn ecosystem(&self) -> Ecosystem;
+
+    /// Fetch available versions from upstream.
+    async fn fetch_versions(&self, name: &PackageName) -> Result<Vec<VersionInfo>>;
+
+    /// Fetch metadata for a specific version.
+    async fn fetch_metadata(&self, name: &PackageName, version: &str) -> Result<VersionMetadata>;
+
+    /// Fetch artifact bytes from upstream.
+    async fn fetch_artifact(&self, artifact_id: &ArtifactId) -> Result<Bytes>;
+}

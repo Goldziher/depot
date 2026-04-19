@@ -1,0 +1,24 @@
+[package]
+name = "depot-core"
+description = "Core domain types, port traits, and business logic for depot"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["chrono", "tracing"]
+
+[features]
+default = []
+encryption = []
+
+[dependencies]
+async-trait.workspace = true
+blake3.workspace = true
+bytes.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+tracing.workspace = true

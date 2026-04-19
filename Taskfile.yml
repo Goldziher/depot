@@ -1,0 +1,40 @@
+version: "3"
+
+tasks:
+  setup:
+    desc: First-time setup — install hooks and generate AI config
+    cmds:
+      - task: setup:prek
+      - task: setup:hooks
+      - task: setup:ai-rulez
+
+  setup:prek:
+    desc: Install prek if not present
+    status:
+      - command -v prek
+    cmds:
+      - |
+        if ! command -v brew &> /dev/null; then
+          echo "Error: Homebrew is not installed. Install it from https://brew.sh"
+          exit 1
+        fi
+        brew install prek
+
+  setup:hooks:
+    desc: Install pre-commit hooks
+    cmds:
+      - prek install
+
+  setup:ai-rulez:
+    desc: Generate AI assistant configuration files
+    cmds:
+      - npx -y ai-rulez@latest generate
+
+  update:
+    desc: Update all dependencies and tools
+    cmds:
+      - echo "Updating Rust dependencies..."
+      - cargo upgrade --incompatible
+      - echo "Updating pre-commit hooks..."
+      - prek autoupdate
+      - echo "All dependencies updated"

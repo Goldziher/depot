@@ -1,0 +1,32 @@
+[package]
+name = "depot-cli"
+description = "CLI binary for the depot package registry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["depot-adapters", "depot-storage", "serde", "toml"]
+
+[features]
+default = ["full"]
+full = [
+    "depot-adapters/pypi",
+    "depot-adapters/npm",
+    "depot-adapters/cargo-registry",
+    "depot-adapters/hex",
+    "depot-storage/backend-fs",
+]
+
+[dependencies]
+axum.workspace = true
+clap.workspace = true
+depot-adapters.workspace = true
+depot-core.workspace = true
+depot-server.workspace = true
+depot-storage.workspace = true
+serde.workspace = true
+tokio.workspace = true
+toml.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

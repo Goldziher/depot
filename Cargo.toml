@@ -1,0 +1,70 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/depot-adapters",
+    "crates/depot-cli",
+    "crates/depot-core",
+    "crates/depot-server",
+    "crates/depot-storage",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "BUSL-1.1"
+
+[workspace.dependencies]
+
+# Async traits
+async-trait = "0.1"
+
+# Web framework & middleware
+axum = "0.8"
+
+# Integrity
+blake3 = "1"
+
+# Bytes / streaming
+bytes = "1"
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+depot-adapters = { path = "crates/depot-adapters" }
+
+# Workspace crates
+depot-core = { path = "crates/depot-core" }
+depot-server = { path = "crates/depot-server" }
+depot-storage = { path = "crates/depot-storage" }
+
+# Storage
+opendal = "0.51"
+
+# HTTP client
+reqwest = { version = "0.12", default-features = false, features = [
+    "rustls-tls",
+    "json",
+    "stream",
+] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+thiserror = "2"
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+toml = "0.8"
+tower = { version = "0.5", features = ["full"] }
+tower-http = { version = "0.6", features = [
+    "cors",
+    "compression-full",
+    "trace",
+] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
