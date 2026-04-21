@@ -15,15 +15,24 @@ full = [
     "depot-adapters/npm",
     "depot-adapters/cargo-registry",
     "depot-adapters/hex",
-    "depot-storage/backend-fs",
+    "depot-server/pypi",
+    "depot-server/npm",
+    "depot-server/cargo-registry",
+    "depot-server/hex",
+    "backend-fs",
+    "backend-memory",
 ]
+backend-fs = ["depot-storage/backend-fs"]
+backend-memory = ["depot-storage/backend-memory"]
 
 [dependencies]
+ahash.workspace = true
 axum.workspace = true
 clap.workspace = true
 depot-adapters.workspace = true
 depot-core.workspace = true
 depot-server.workspace = true
+depot-service.workspace = true
 depot-storage.workspace = true
 serde.workspace = true
 tokio.workspace = true

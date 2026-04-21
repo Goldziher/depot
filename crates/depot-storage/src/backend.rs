@@ -2,7 +2,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use opendal::Operator;
 
-use depot_core::error::{DepotError, Result};
+use depot_core::error::DepotError;
+use depot_core::error::Result;
 use depot_core::ports::StoragePort;
 
 /// Storage backend backed by OpenDAL.
@@ -13,6 +14,29 @@ pub struct OpenDalStorage {
 impl OpenDalStorage {
     pub fn new(operator: Operator) -> Self {
         Self { operator }
+    }
+
+    /// Create a filesystem-backed storage rooted at the given path.
+    ///
+    /// Creates the directory if it does not already exist.
+    #[cfg(feature = "backend-fs")]
+    pub fn filesystem(root: &std::path::Path) -> Result<Self> {
+        std::fs::create_dir_all(root)?;
+        let builder = opendal::services::Fs::default().root(&root.to_string_lossy());
+        let operator = Operator::new(builder)
+            .map_err(|e| DepotError::Storage(e.to_string()))?
+            .finish();
+        Ok(Self::new(operator))
+    }
+
+    /// Create an in-memory storage backend (useful for testing).
+    #[cfg(feature = "backend-memory")]
+    pub fn memory() -> Result<Self> {
+        let builder = opendal::services::Memory::default();
+        let operator = Operator::new(builder)
+            .map_err(|e| DepotError::Storage(e.to_string()))?
+            .finish();
+        Ok(Self::new(operator))
     }
 }
 

@@ -12,23 +12,32 @@ All code lives under `crates/` — there is no top-level `src/`.
 
 | Crate | Role |
 |-------|------|
-| `depot-core` | Domain types, port traits (`PackageService`, `StoragePort`, `UpstreamClient`), blake3 integrity, policy engine, lock file, config |
+| `depot-core` | Domain types, port traits (`PackageService`, `StoragePort`, `UpstreamClient`), policy engine, lock file, config |
+| `depot-service` | Application service layer. `CachingPackageService` implements pull-through caching, blake3 integrity verification (sidecar `.blake3` files), and policy enforcement. Sits between adapters and core. |
 | `depot-storage` | OpenDAL-backed `StoragePort` implementation. Feature-gated backends: `backend-fs`, `backend-s3`, `backend-gcs`, `backend-memory` |
-| `depot-adapters` | Inbound protocol adapters (axum routers) + outbound upstream clients. Feature-gated: `pypi`, `npm`, `cargo-registry`, `hex` |
+| `depot-adapters` | Inbound protocol adapters (axum routers) + outbound upstream clients. Feature-gated: `pypi`, `npm`, `cargo-registry`, `hex`. Each adapter defines a state trait (`HasPypiState`, `HasNpmState`, `HasCargoState`, `HasHexState`) for accessing `PackageService` + ecosystem-specific upstream client. |
 | `depot-server` | Axum app assembly, Tower middleware stack (tracing, CORS, auth, compression), shared `AppState` |
 | `depot-cli` | Binary crate. Clap CLI with commands: `serve`, `sync`, `lock`, `config` |
+| `tests/integration` | Integration test crate with 31 tests covering pip, npm, cargo, and mix client workflows |
 
 ## Dependency Flow
 
 `depot-cli → depot-server → depot-adapters → depot-core`
-`depot-server → depot-storage → depot-core`
+`→ depot-service  → depot-core`
+`→ depot-storage  → depot-core`
 
 The core crate has zero framework dependencies — all I/O goes through port traits.
 
 ## Key Design Decisions
 
-- Protocol adapters translate native requests (PEP 503, npm registry API, Cargo sparse index, Hex API) into `PackageService` trait calls
-- Pull-through cache: fetch from upstream on miss, verify with blake3, apply policy, store via OpenDAL, serve
+- Protocol adapters call `list_versions` to trigger caching, then serve the upstream client's cached response directly with URL rewriting (preserving all protocol-specific fields like npm dependencies, PyPI requires-python, Cargo deps/features)
+- Pull-through cache in `CachingPackageService`: fetch from upstream on miss, verify with blake3, apply policy, store via OpenDAL, serve
+- Blake3 hashes are stored as `.blake3` sidecar files alongside artifacts and verified on every cache read
+- Upstream hashes are preserved in `ArtifactDigest.upstream_hashes`
+- All upstream client caches use 5-minute TTL via `(Instant, T)` tuples
+- npm adapter stores/serves raw `serde_json::Value` to handle the wide variety of npm field shapes
+- npm adapter performs recursive BFS dependency prefetch (max depth 10) when serving a packument
+- Hex adapter includes a protobuf registry proxy at `/hex/packages/{name}` for mix checksum verification
 - Storage keys: `<ecosystem>/<name>/<version>/<filename>`
 - Lock file: TOML-based, ecosystem-agnostic, blake3 hashes
 - Feature flags control compile-time inclusion of adapters and storage backends

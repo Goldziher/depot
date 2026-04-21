@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::str::FromStr;
 
+use ahash::AHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -184,6 +185,10 @@ pub struct ArtifactDigest {
     pub filename: String,
     pub blake3: String,
     pub size: u64,
+    /// Hashes from the upstream registry (e.g., `{"sha256": "abc..."}`).
+    #[serde(default)]
+    #[schemars(with = "std::collections::HashMap<String, String>")]
+    pub upstream_hashes: AHashMap<String, String>,
 }
 
 #[cfg(test)]

@@ -8,6 +8,13 @@ license.workspace = true
 [package.metadata.cargo-machete]
 ignored = ["depot-adapters", "depot-storage", "tokio", "tower", "tracing"]
 
+[features]
+default = ["pypi", "npm", "cargo-registry", "hex"]
+pypi = ["depot-adapters/pypi"]
+npm = ["depot-adapters/npm"]
+cargo-registry = ["depot-adapters/cargo-registry"]
+hex = ["depot-adapters/hex"]
+
 [dependencies]
 axum.workspace = true
 depot-adapters.workspace = true

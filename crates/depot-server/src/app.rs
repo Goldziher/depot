@@ -7,13 +7,29 @@ use crate::state::AppState;
 
 /// Build the axum application with all middleware and adapter routes.
 pub fn build_app(state: AppState) -> Router {
-    Router::new()
-        // Protocol adapter routes will be nested here:
-        // .nest("/pypi", pypi::router(state.clone()))
-        // .nest("/npm", npm::router(state.clone()))
-        // .nest("/cargo", cargo::router(state.clone()))
-        // .nest("/hex", hex::router(state.clone()))
-        .layer(CompressionLayer::new())
+    let mut app = Router::new();
+
+    #[cfg(feature = "pypi")]
+    {
+        app = app.nest("/pypi", depot_adapters::pypi::router());
+    }
+
+    #[cfg(feature = "npm")]
+    {
+        app = app.nest("/npm", depot_adapters::npm::router());
+    }
+
+    #[cfg(feature = "cargo-registry")]
+    {
+        app = app.nest("/cargo", depot_adapters::cargo::router());
+    }
+
+    #[cfg(feature = "hex")]
+    {
+        app = app.nest("/hex", depot_adapters::hex::router());
+    }
+
+    app.layer(CompressionLayer::new())
         // TODO: replace CorsLayer::permissive() with a restrictive policy before production use
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())

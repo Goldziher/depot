@@ -633,6 +633,7 @@ checksum = "d7a1e2f27636f116493b8b860f5546edb47c8d8f8ea73e1d2a20be88e28d1fea"
 name = "depot-adapters"
 version = "0.1.0"
 dependencies = [
+ "ahash",
  "async-trait",
  "axum",
  "bytes",
@@ -641,6 +642,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.18",
+ "tokio",
  "tracing",
 ]
 
@@ -648,11 +650,13 @@ dependencies = [
 name = "depot-cli"
 version = "0.1.0"
 dependencies = [
+ "ahash",
  "axum",
  "clap",
  "depot-adapters",
  "depot-core",
  "depot-server",
+ "depot-service",
  "depot-storage",
  "serde",
  "tokio",
@@ -665,6 +669,7 @@ dependencies = [
 name = "depot-core"
 version = "0.1.0"
 dependencies = [
+ "ahash",
  "async-trait",
  "blake3",
  "bytes",
@@ -679,6 +684,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "depot-integration-tests"
+version = "0.1.0"
+dependencies = [
+ "ahash",
+ "axum",
+ "depot-adapters",
+ "depot-core",
+ "depot-server",
+ "depot-service",
+ "depot-storage",
+ "reqwest 0.13.2",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "depot-server"
 version = "0.1.0"
 dependencies = [
@@ -689,6 +712,20 @@ dependencies = [
  "tokio",
  "tower",
  "tower-http",
+ "tracing",
+]
+
+[[package]]
+name = "depot-service"
+version = "0.1.0"
+dependencies = [
+ "ahash",
+ "async-trait",
+ "bytes",
+ "depot-core",
+ "serde",
+ "serde_json",
+ "tokio",
  "tracing",
 ]
 

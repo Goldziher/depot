@@ -5,7 +5,9 @@ members = [
     "crates/depot-cli",
     "crates/depot-core",
     "crates/depot-server",
+    "crates/depot-service",
     "crates/depot-storage",
+    "tests/integration",
     "tools/test-generator",
 ]
 
@@ -17,7 +19,7 @@ license = "BUSL-1.1"
 [workspace.dependencies]
 
 # Fast hashing
-ahash = "0.8"
+ahash = { version = "0.8", features = ["serde"] }
 
 # Async traits
 async-trait = "0.1"
@@ -41,6 +43,7 @@ depot-adapters = { path = "crates/depot-adapters" }
 # Workspace crates
 depot-core = { path = "crates/depot-core" }
 depot-server = { path = "crates/depot-server" }
+depot-service = { path = "crates/depot-service" }
 depot-storage = { path = "crates/depot-storage" }
 
 # JSON schema validation

@@ -512,6 +512,7 @@ fn policy_01_policy_checks_allow_everything_by_default() {
             filename: "dummy.tar.gz".into(),
             blake3: "0".repeat(64),
             size: 0,
+            upstream_hashes: ahash::AHashMap::new(),
         }],
     };
     let result = policy.check(&metadata);
@@ -540,6 +541,7 @@ fn policy_01_policy_checks_block_explicitly_blocked_package() {
             filename: "dummy.tar.gz".into(),
             blake3: "0".repeat(64),
             size: 0,
+            upstream_hashes: ahash::AHashMap::new(),
         }],
     };
     let result = policy.check(&metadata);
@@ -569,6 +571,7 @@ fn policy_01_policy_checks_block_unlicensed_when_configured() {
             filename: "dummy.tar.gz".into(),
             blake3: "0".repeat(64),
             size: 0,
+            upstream_hashes: ahash::AHashMap::new(),
         }],
     };
     let result = policy.check(&metadata);
@@ -598,6 +601,7 @@ fn policy_01_policy_checks_allow_unlicensed_when_not_configured() {
             filename: "dummy.tar.gz".into(),
             blake3: "0".repeat(64),
             size: 0,
+            upstream_hashes: ahash::AHashMap::new(),
         }],
     };
     let result = policy.check(&metadata);
@@ -626,6 +630,7 @@ fn policy_01_policy_checks_block_license_not_in_allowlist() {
             filename: "dummy.tar.gz".into(),
             blake3: "0".repeat(64),
             size: 0,
+            upstream_hashes: ahash::AHashMap::new(),
         }],
     };
     let result = policy.check(&metadata);
@@ -655,6 +660,7 @@ fn policy_01_policy_checks_allow_license_in_allowlist() {
             filename: "dummy.tar.gz".into(),
             blake3: "0".repeat(64),
             size: 0,
+            upstream_hashes: ahash::AHashMap::new(),
         }],
     };
     let result = policy.check(&metadata);
@@ -683,6 +689,7 @@ fn policy_01_policy_checks_empty_allowlist_allows_all_licenses() {
             filename: "dummy.tar.gz".into(),
             blake3: "0".repeat(64),
             size: 0,
+            upstream_hashes: ahash::AHashMap::new(),
         }],
     };
     let result = policy.check(&metadata);
@@ -711,6 +718,7 @@ fn policy_01_policy_checks_non_blocked_package_passes() {
             filename: "dummy.tar.gz".into(),
             blake3: "0".repeat(64),
             size: 0,
+            upstream_hashes: ahash::AHashMap::new(),
         }],
     };
     let result = policy.check(&metadata);

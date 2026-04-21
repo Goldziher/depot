@@ -29,19 +29,23 @@ graph TB
         hex_adapter[Hex Adapter<br/>Repository API]
     end
 
-    subgraph "Core Domain"
-        svc[PackageService]
+    subgraph "Application Service"
+        caching_svc[CachingPackageService<br/>depot-service]
         policy[Policy Engine]
-        integrity[Blake3 Integrity]
+        integrity[Blake3 Integrity<br/>sidecar .blake3 files]
         lockfile[Lock File]
+    end
+
+    subgraph "Core Domain"
+        svc[PackageService trait<br/>depot-core]
     end
 
     subgraph "Outbound Adapters"
         storage[StoragePort<br/>OpenDAL]
-        upstream_pypi[PyPI Upstream]
-        upstream_npm[npm Upstream]
-        upstream_cargo[Cargo Upstream]
-        upstream_hex[Hex Upstream]
+        upstream_pypi[PyPI Upstream<br/>5min TTL cache]
+        upstream_npm[npm Upstream<br/>5min TTL cache]
+        upstream_cargo[Cargo Upstream<br/>5min TTL cache]
+        upstream_hex[Hex Upstream<br/>5min TTL cache]
     end
 
     subgraph "Storage Backends"
@@ -62,19 +66,21 @@ graph TB
     compress --> cargo_adapter
     compress --> hex_adapter
 
-    pypi_adapter --> svc
-    npm_adapter --> svc
-    cargo_adapter --> svc
-    hex_adapter --> svc
+    pypi_adapter --> caching_svc
+    npm_adapter --> caching_svc
+    cargo_adapter --> caching_svc
+    hex_adapter --> caching_svc
 
-    svc --> policy
-    svc --> integrity
-    svc --> lockfile
-    svc --> storage
-    svc --> upstream_pypi
-    svc --> upstream_npm
-    svc --> upstream_cargo
-    svc --> upstream_hex
+    pypi_adapter -.-> upstream_pypi
+    npm_adapter -.-> upstream_npm
+    cargo_adapter -.-> upstream_cargo
+    hex_adapter -.-> upstream_hex
+
+    caching_svc --> svc
+    caching_svc --> policy
+    caching_svc --> integrity
+    caching_svc --> lockfile
+    caching_svc --> storage
 
     storage --> fs
     storage --> s3
@@ -87,30 +93,39 @@ graph TB
 sequenceDiagram
     participant Client
     participant Adapter
-    participant PackageService
+    participant UpstreamClient
+    participant CachingPackageService
     participant Storage
-    participant Upstream
 
     Client->>Adapter: GET /pypi/simple/requests/
-    Adapter->>PackageService: list_versions(PyPI, "requests")
+    Adapter->>CachingPackageService: list_versions(PyPI, "requests")
+    CachingPackageService->>UpstreamClient: fetch_versions("requests")
+    UpstreamClient-->>CachingPackageService: version list
+    CachingPackageService-->>Adapter: VersionMetadata
 
-    PackageService->>Storage: exists("pypi/requests/...")
+    Note over Adapter,UpstreamClient: Adapter serves cached upstream response directly<br/>with URL rewriting (preserves protocol-specific fields)
+
+    Adapter->>UpstreamClient: get cached response
+    UpstreamClient-->>Adapter: cached response (5min TTL)
+    Adapter-->>Client: PEP 691 JSON (URLs rewritten to depot)
+
+    Client->>Adapter: GET /pypi/artifacts/requests/requests-2.31.0.tar.gz
+    Adapter->>CachingPackageService: get_artifact(PyPI, "requests", ...)
+
+    CachingPackageService->>CachingPackageService: check blocked_packages policy
+    CachingPackageService->>Storage: exists("pypi/requests/...")
     alt Cached
-        Storage-->>PackageService: true
-        PackageService->>Storage: get("pypi/requests/...")
-        Storage-->>PackageService: artifact data
+        Storage-->>CachingPackageService: artifact data
+        CachingPackageService->>CachingPackageService: verify blake3 from .blake3 sidecar
     else Not cached
-        PackageService->>Upstream: fetch_versions("requests")
-        Upstream-->>PackageService: version list
-        PackageService->>Upstream: fetch_artifact(artifact_id)
-        Upstream-->>PackageService: artifact bytes
-        PackageService->>PackageService: verify blake3
-        PackageService->>PackageService: check policy
-        PackageService->>Storage: put(key, data)
+        CachingPackageService->>UpstreamClient: fetch_artifact(artifact_id)
+        UpstreamClient-->>CachingPackageService: artifact bytes
+        CachingPackageService->>CachingPackageService: compute blake3, store .blake3 sidecar
+        CachingPackageService->>Storage: put(key, data)
     end
 
-    PackageService-->>Adapter: VersionMetadata
-    Adapter-->>Client: PEP 691 JSON response
+    CachingPackageService-->>Adapter: artifact bytes
+    Adapter-->>Client: artifact response
 ```
 
 ## Crate Dependencies
@@ -119,18 +134,22 @@ sequenceDiagram
 graph LR
     cli[depot-cli] --> server[depot-server]
     server --> adapters[depot-adapters]
+    server --> service[depot-service]
     server --> storage[depot-storage]
     adapters --> core[depot-core]
+    service --> core
     storage --> core
 ```
 
 | Crate | Purpose |
 |-------|---------|
-| `depot-core` | Domain types, port traits, blake3 integrity, policy, lockfile, config, registry schemas |
+| `depot-core` | Domain types, port traits (`PackageService`, `StoragePort`, `UpstreamClient`), policy engine, lock file, config |
+| `depot-service` | Application service layer. `CachingPackageService`: pull-through caching, blake3 integrity (sidecar `.blake3` files), policy enforcement |
 | `depot-storage` | `StoragePort` via OpenDAL — feature-gated backends (fs, S3, GCS, memory) |
-| `depot-adapters` | Protocol adapters (axum routers) + upstream clients — feature-gated per ecosystem |
+| `depot-adapters` | Protocol adapters (axum routers) + upstream clients — feature-gated per ecosystem. Each adapter defines a state trait (`HasPypiState`, etc.) for accessing `PackageService` + upstream client |
 | `depot-server` | Axum app assembly, Tower middleware stack, shared `AppState` |
 | `depot-cli` | Binary crate, clap CLI: `serve`, `sync`, `lock`, `config` |
+| `tests/integration` | Integration test crate with 31 tests covering pip, npm, cargo, and mix client workflows |
 
 ## Storage Key Scheme
 
@@ -149,10 +168,10 @@ Examples:
 
 | Protocol | Spec | Endpoints | Format |
 |----------|------|-----------|--------|
-| PyPI | PEP 503/691 | `/pypi/simple/<name>/` | JSON (PEP 691) |
-| npm | Registry API | `/npm/<package>` | JSON |
-| Cargo | Sparse Index (RFC 2789) | `/cargo/index/<prefix>/<name>` | NDJSON |
-| Hex | Repository API | `/hex/packages/<name>` | JSON / Protobuf |
+| PyPI | PEP 503/691 | `/pypi/simple/<name>/`, `/pypi/artifacts/<name>/<filename>` | JSON (PEP 691) |
+| npm | Registry API | `/npm/<package>`, `/npm/<package>/-/<filename>` | JSON (raw `serde_json::Value`, BFS dep prefetch) |
+| Cargo | Sparse Index (RFC 2789) | `/cargo/index/<prefix>/<name>`, `/cargo/api/v1/crates/<name>/<version>/download` | NDJSON |
+| Hex | Repository API | `/hex/packages/<name>` (JSON + protobuf registry proxy), `/hex/tarballs/<name>-<version>.tar` | JSON / Protobuf |
 
 ## JSON Schemas
 

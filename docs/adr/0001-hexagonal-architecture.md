@@ -18,8 +18,15 @@ We adopt a hexagonal (ports and adapters) architecture. The core domain defines 
 
 The `depot-core` crate has zero dependencies on web frameworks, storage libraries, or HTTP clients. All I/O happens through trait implementations injected at startup.
 
+## Implementation Notes
+
+The `depot-service` crate provides the application service layer between adapters and core. `CachingPackageService` implements the `PackageService` port trait with pull-through caching, blake3 integrity verification, and policy enforcement.
+
+Each protocol adapter defines its own state trait (`HasPypiState`, `HasNpmState`, `HasCargoState`, `HasHexState`) that provides access to both the `PackageService` and the ecosystem-specific upstream client. This allows handlers to serve cached upstream data directly (preserving protocol-specific fields) while still going through `PackageService` for the caching lifecycle.
+
 ## Consequences
 
 - Core business logic (policy enforcement, integrity verification, lock file management) is testable without any I/O.
 - Adding a new protocol or storage backend requires only a new adapter — no core changes.
 - The indirection adds a trait boundary at every I/O point, which has minor ergonomic cost but no meaningful runtime cost (monomorphization or `Arc<dyn Trait>`).
+- The `HasXxxState` adapter traits allow protocol-specific data to flow through without lossy conversion to domain types.

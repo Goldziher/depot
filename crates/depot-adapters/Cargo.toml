@@ -7,6 +7,7 @@ license.workspace = true
 
 [package.metadata.cargo-machete]
 ignored = [
+    "ahash",
     "async-trait",
     "axum",
     "bytes",
@@ -15,6 +16,7 @@ ignored = [
     "serde",
     "serde_json",
     "thiserror",
+    "tokio",
     "tracing",
 ]
 
@@ -26,6 +28,7 @@ cargo-registry = []
 hex = []
 
 [dependencies]
+ahash.workspace = true
 async-trait.workspace = true
 axum.workspace = true
 bytes.workspace = true
@@ -34,4 +37,5 @@ reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+tokio.workspace = true
 tracing.workspace = true

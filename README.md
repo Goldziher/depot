@@ -8,10 +8,10 @@ Depot speaks native registry protocols (PyPI, npm, Cargo, Hex) and acts as a pul
 
 | Protocol | Spec | Status |
 |----------|------|--------|
-| PyPI | PEP 503/691 Simple Repository API | In progress |
-| npm | Registry API | In progress |
-| Cargo | Sparse Index (RFC 2789) | In progress |
-| Hex | Repository API | In progress |
+| PyPI | PEP 503/691 Simple Repository API | Working (`pip install` verified) |
+| npm | Registry API | Working (`npm install` verified) |
+| Cargo | Sparse Index (RFC 2789) | Working (`cargo fetch` verified) |
+| Hex | Repository API | Working (`mix hex.package fetch` verified) |
 
 ## Requirements
 
@@ -30,8 +30,11 @@ cargo build --workspace
 # Run the server
 cargo run -p depot-cli -- serve
 
-# Run tests
+# Run unit tests
 cargo test --workspace
+
+# Run integration tests (requires a running server)
+cargo test -p integration-tests
 
 # Lint
 cargo clippy --workspace
@@ -39,7 +42,18 @@ cargo clippy --workspace
 
 ## Architecture
 
-Depot uses a hexagonal architecture with Tower middleware. See the [Architecture Overview](docs/architecture.md) for Mermaid diagrams and detailed component descriptions.
+Depot uses a hexagonal architecture with Tower middleware. The crate structure is:
+
+| Crate | Role |
+|-------|------|
+| `depot-core` | Domain types, port traits, policy engine, lock file, config |
+| `depot-service` | Application service layer (`CachingPackageService`): pull-through caching, blake3 integrity, policy enforcement |
+| `depot-storage` | OpenDAL-backed `StoragePort` (feature-gated: fs, S3, GCS, memory) |
+| `depot-adapters` | Protocol adapters (axum routers) + upstream clients (feature-gated per ecosystem) |
+| `depot-server` | Axum app assembly, Tower middleware, shared `AppState` |
+| `depot-cli` | Binary crate, Clap CLI |
+
+See the [Architecture Overview](docs/architecture.md) for Mermaid diagrams and detailed component descriptions.
 
 ### ADRs
 

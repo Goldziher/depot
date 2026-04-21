@@ -27,6 +27,9 @@ pub trait PackageService: Send + Sync {
 
     /// Download an artifact.
     async fn get_artifact(&self, artifact_id: &ArtifactId) -> Result<Bytes>;
+
+    /// List all cached packages for an ecosystem.
+    async fn list_packages(&self, ecosystem: Ecosystem) -> Result<Vec<PackageName>>;
 }
 
 // ---------------------------------------------------------------------------

@@ -532,6 +532,11 @@ fn generate_policy_test(
     writeln!(output, "            filename: \"dummy.tar.gz\".into(),").unwrap();
     writeln!(output, "            blake3: \"0\".repeat(64),").unwrap();
     writeln!(output, "            size: 0,").unwrap();
+    writeln!(
+        output,
+        "            upstream_hashes: ahash::AHashMap::new(),"
+    )
+    .unwrap();
     writeln!(output, "        }}],").unwrap();
     writeln!(output, "    }};").unwrap();
 

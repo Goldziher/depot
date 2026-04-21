@@ -10,6 +10,7 @@ default = []
 encryption = []
 
 [dependencies]
+ahash.workspace = true
 async-trait.workspace = true
 blake3.workspace = true
 bytes.workspace = true

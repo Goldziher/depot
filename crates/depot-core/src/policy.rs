@@ -66,6 +66,8 @@ impl PolicyConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ahash::AHashMap;
+
     use crate::package::{ArtifactDigest, PackageName};
 
     fn load_fixtures() -> Vec<serde_json::Value> {
@@ -113,6 +115,7 @@ mod tests {
                 filename: "dummy.tar.gz".into(),
                 blake3: "0".repeat(64),
                 size: 0,
+                upstream_hashes: AHashMap::new(),
             }],
         }
     }

@@ -5,3 +5,5 @@
 AGENTS.md
 CLAUDE.md
 .codex/
+depot-data/
+erl_crash.dump
