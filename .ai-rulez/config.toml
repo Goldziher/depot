@@ -1,0 +1,9 @@
+# AI-Rulez Configuration (migrated to V4 TOML format)
+# Documentation: https://github.com/Goldziher/ai-rulez
+
+version = '4.0'
+name = 'depot'
+description = 'Self-hosted armored universal package registry'
+gitignore = true
+presets = ['claude', 'codex']
+builtins = ['rust', 'security', 'git-workflow', 'code-quality', 'testing', 'documentation', 'default-commands']
