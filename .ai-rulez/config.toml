@@ -6,4 +6,4 @@ name = 'depot'
 description = 'Self-hosted armored universal package registry'
 gitignore = true
 presets = ['claude', 'codex']
-builtins = ['rust', 'security', 'git-workflow', 'code-quality', 'testing', 'documentation', 'default-commands']
+builtins = ['rust', 'default-commands']
