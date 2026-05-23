@@ -1,71 +1,154 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title": "npm Registry Packument",
-	"description": "Package metadata response from npm registry",
-	"type": "object",
-	"required": ["name", "versions"],
-	"properties": {
-		"name": { "type": "string" },
-		"description": { "type": "string" },
-		"dist-tags": {
-			"type": "object",
-			"additionalProperties": { "type": "string" }
-		},
-		"versions": {
-			"type": "object",
-			"additionalProperties": {
-				"type": "object",
-				"required": ["name", "version", "dist"],
-				"properties": {
-					"name": { "type": "string" },
-					"version": { "type": "string" },
-					"description": { "type": "string" },
-					"license": { "type": ["string", "null"] },
-					"dependencies": {
-						"type": "object",
-						"additionalProperties": { "type": "string" }
-					},
-					"devDependencies": {
-						"type": "object",
-						"additionalProperties": { "type": "string" }
-					},
-					"dist": {
-						"type": "object",
-						"required": ["tarball", "shasum"],
-						"properties": {
-							"tarball": { "type": "string", "format": "uri" },
-							"shasum": { "type": "string" },
-							"integrity": { "type": "string" },
-							"fileCount": { "type": "integer" },
-							"unpackedSize": { "type": "integer" }
-						}
-					}
-				}
-			}
-		},
-		"time": {
-			"type": "object",
-			"additionalProperties": { "type": "string" }
-		},
-		"author": {
-			"oneOf": [
-				{ "type": "string" },
-				{
-					"type": "object",
-					"properties": {
-						"name": { "type": "string" },
-						"email": { "type": "string" }
-					}
-				}
-			]
-		},
-		"repository": {
-			"type": "object",
-			"properties": {
-				"type": { "type": "string" },
-				"url": { "type": "string" }
-			}
-		},
-		"readme": { "type": "string" }
-	}
+  "$defs": {
+    "NpmDist": {
+      "description": "Distribution metadata for an npm version.",
+      "properties": {
+        "fileCount": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "integrity": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "shasum": {
+          "type": "string"
+        },
+        "tarball": {
+          "type": "string"
+        },
+        "unpackedSize": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "tarball",
+        "shasum"
+      ],
+      "type": "object"
+    },
+    "NpmVersion": {
+      "description": "A single version within a packument.",
+      "properties": {
+        "dependencies": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "type": "object"
+        },
+        "description": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "devDependencies": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "type": "object"
+        },
+        "dist": {
+          "$ref": "#/$defs/NpmDist"
+        },
+        "license": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "dist"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.depot.local/registries/npm.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-derived JSON Schema for npm registry package metadata.",
+  "properties": {
+    "description": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "dist-tags": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
+      "type": "object"
+    },
+    "name": {
+      "type": "string"
+    },
+    "readme": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "time": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
+      "type": "object"
+    },
+    "versions": {
+      "additionalProperties": {
+        "$ref": "#/$defs/NpmVersion"
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "name",
+    "versions"
+  ],
+  "title": "npm Registry Packument",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-derived-json-schema",
+    "source_file": "crates/depot-core/src/registry/npm.rs",
+    "source_ids": [
+      "npm-package-metadata",
+      "npm-types"
+    ],
+    "source_kinds": [
+      "official-prose",
+      "official-typescript"
+    ],
+    "source_type": "depot_core::registry::npm::NpmPackument",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance"
+  }
 }

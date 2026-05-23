@@ -1,0 +1,687 @@
+{
+  "schema_version": 1,
+  "generated_by": "depot-schema-manager",
+  "sources": [
+    {
+      "id": "pypa-specifications-index",
+      "registry": "pypi",
+      "kind": "official-prose-index",
+      "url": "https://packaging.python.org/en/latest/specifications/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "PyPA canonical index of Python packaging interoperability specifications."
+    },
+    {
+      "id": "pypi-simple-api",
+      "registry": "pypi",
+      "kind": "official-prose",
+      "url": "https://packaging.python.org/en/latest/specifications/simple-repository-api/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "PyPA living specification for the Simple Repository API, including JSON responses."
+    },
+    {
+      "id": "pypi-core-metadata",
+      "registry": "pypi",
+      "kind": "official-prose",
+      "url": "https://packaging.python.org/en/latest/specifications/core-metadata/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "PyPA Core Metadata specification for Python distribution metadata fields."
+    },
+    {
+      "id": "pypi-name-normalization",
+      "registry": "pypi",
+      "kind": "official-prose",
+      "url": "https://packaging.python.org/en/latest/specifications/name-normalization/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "PyPA package name normalization specification used by PyPI-compatible indexes."
+    },
+    {
+      "id": "pypi-binary-distribution-format",
+      "registry": "pypi",
+      "kind": "official-prose",
+      "url": "https://packaging.python.org/en/latest/specifications/binary-distribution-format/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "PyPA wheel binary distribution format specification used for PyPI filename interpretation."
+    },
+    {
+      "id": "pypi-source-distribution-format",
+      "registry": "pypi",
+      "kind": "official-prose",
+      "url": "https://packaging.python.org/en/latest/specifications/source-distribution-format/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "PyPA source distribution format specification used for PyPI source archive interpretation."
+    },
+    {
+      "id": "pypi-json-api",
+      "registry": "pypi",
+      "kind": "official-prose",
+      "url": "https://docs.pypi.org/api/json/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "PyPI-specific JSON API documentation, used only for compatibility context."
+    },
+    {
+      "id": "pypa-schema-index",
+      "registry": "pypi",
+      "kind": "official-schema-index",
+      "url": "https://packaging.python.org/en/latest/specifications/schemas/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "PyPA schema index; it does not currently include PyPI registry metadata schemas."
+    },
+    {
+      "id": "npm-package-metadata",
+      "registry": "npm",
+      "kind": "official-prose",
+      "url": "https://github.com/npm/registry/blob/main/docs/responses/package-metadata.md",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "npm registry package metadata documentation for full and abbreviated packuments."
+    },
+    {
+      "id": "npm-types",
+      "registry": "npm",
+      "kind": "official-typescript",
+      "url": "https://raw.githubusercontent.com/npm/types/main/types/index.d.ts",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/npm/types/index.d.ts",
+      "blake3": "58b067a9166de4614e3e0dee2b5a349f38111ef03dd48a8039f06b776e82f81a",
+      "description": "npm-maintained TypeScript definitions for registry content; used as machine-readable reference, not authoritative JSON Schema."
+    },
+    {
+      "id": "cargo-registry-index",
+      "registry": "cargo",
+      "kind": "official-prose",
+      "url": "https://doc.rust-lang.org/cargo/reference/registry-index.html",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Cargo Book registry index specification for sparse index config and JSONL package entries."
+    },
+    {
+      "id": "hex-registry-v2",
+      "registry": "hex",
+      "kind": "official-prose",
+      "url": "https://github.com/hexpm/specifications/blob/main/registry-v2.md",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Hex Registry v2 protocol documentation."
+    },
+    {
+      "id": "hex-package-proto",
+      "registry": "hex",
+      "kind": "official-protobuf",
+      "url": "https://raw.githubusercontent.com/hexpm/specifications/main/registry/package.proto",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/hex/registry/package.proto",
+      "blake3": "652429e18da472b9fa28b915767afebe184f6ef14f74816f2f40fc52d65f6c5f",
+      "description": "Official Hex protobuf definition for package registry resources."
+    },
+    {
+      "id": "hex-names-proto",
+      "registry": "hex",
+      "kind": "official-protobuf",
+      "url": "https://raw.githubusercontent.com/hexpm/specifications/main/registry/names.proto",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/hex/registry/names.proto",
+      "blake3": "978b548412f326ea280b9fba46ae834b34852a3c85a22196e47922e477516552",
+      "description": "Official Hex protobuf definition for registry names resources."
+    },
+    {
+      "id": "hex-versions-proto",
+      "registry": "hex",
+      "kind": "official-protobuf",
+      "url": "https://raw.githubusercontent.com/hexpm/specifications/main/registry/versions.proto",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/hex/registry/versions.proto",
+      "blake3": "739fd1eeb248bab8f63ef6e8ef416fb2749b82315920af9203eac0e57ea6a0c4",
+      "description": "Official Hex protobuf definition for registry versions resources."
+    },
+    {
+      "id": "hex-signed-proto",
+      "registry": "hex",
+      "kind": "official-protobuf",
+      "url": "https://raw.githubusercontent.com/hexpm/specifications/main/registry/signed.proto",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/hex/registry/signed.proto",
+      "blake3": "72b0be047fb96341379c7b2b69016a8c51ce00a1d498c76ee09b6ee78c9f38c0",
+      "description": "Official Hex protobuf definition for signed registry payloads."
+    },
+    {
+      "id": "hex-package-metadata",
+      "registry": "hex",
+      "kind": "official-prose",
+      "url": "https://github.com/hexpm/specifications/blob/main/package_metadata.md",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Hex package tarball metadata.config documentation."
+    },
+    {
+      "id": "maven-pom-xsd",
+      "registry": "maven",
+      "kind": "official-xml-schema",
+      "url": "https://maven.apache.org/xsd/maven-4.0.0.xsd",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/maven/maven-4.0.0.xsd",
+      "blake3": "38bd091ff4d20d3684f0d80e69873f47a174b7632de23a470286fdb40fae0342",
+      "description": "Official Maven POM 4.0.0 XML Schema."
+    },
+    {
+      "id": "maven-repository-metadata-xsd",
+      "registry": "maven",
+      "kind": "official-xml-schema",
+      "url": "https://maven.apache.org/xsd/repository-metadata-1.1.0.xsd",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/maven/repository-metadata-1.1.0.xsd",
+      "blake3": "69b79178eb2588307a36141d0dafb68249f8988b23203b83f7db5335bef4f2b5",
+      "description": "Official Maven repository metadata XML Schema."
+    },
+    {
+      "id": "sonatype-central-publisher-openapi",
+      "registry": "sonatype",
+      "kind": "official-openapi",
+      "url": "https://central.sonatype.com/swagger.json",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/sonatype/central-publisher-openapi.json",
+      "blake3": "25381c8d2a8aed702f7849b7367df2d538ec3a03e90f6751823dd9a45fc750a3",
+      "description": "Official Central Publisher API OpenAPI document; not used for Maven artifact serving."
+    },
+    {
+      "id": "sonatype-nexus-rest-swagger",
+      "registry": "sonatype",
+      "kind": "official-openapi",
+      "url": "https://sonatype.github.io/sonatype-documentation/api/nexus-repository/latest/nexus-repository-api.json",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/sonatype/nexus-repository-api.json",
+      "blake3": "26e5138153078573f1066e9cb1c92145a1774cd53deb0ae03addd8f5cd2ec42e",
+      "description": "Official published copy of Nexus Repository REST API Swagger; not used for Maven artifact serving."
+    },
+    {
+      "id": "rubygems-compact-index-api",
+      "registry": "rubygems",
+      "kind": "official-prose",
+      "url": "https://guides.rubygems.org/rubygems-org-compact-index-api/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Official RubyGems.org Compact Index API documentation for /versions, /info/:gem, and /names text formats."
+    },
+    {
+      "id": "rubygems-bundler-compact-index-parser",
+      "registry": "rubygems",
+      "kind": "official-ruby-source",
+      "url": "https://raw.githubusercontent.com/ruby/rubygems/master/bundler/lib/bundler/compact_index_client/parser.rb",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/rubygems/bundler/compact_index_client/parser.rb",
+      "blake3": "0cecdc95c1ee5bb8fcbe05d5c5fd7566a49bcee7151a5842554180d758fa629d",
+      "description": "Bundler compact index parser; machine-readable reference for client interpretation of compact index text."
+    },
+    {
+      "id": "rubygems-api-v1",
+      "registry": "rubygems",
+      "kind": "official-prose",
+      "url": "https://guides.rubygems.org/rubygems-org-api/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "RubyGems.org API v1 prose documentation and example JSON/YAML responses; no official JSON Schema or OpenAPI found."
+    },
+    {
+      "id": "rubygems-api-v2",
+      "registry": "rubygems",
+      "kind": "official-prose",
+      "url": "https://guides.rubygems.org/rubygems-org-api-v2/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "RubyGems.org API v2 prose documentation and example JSON/YAML responses; no official JSON Schema or OpenAPI found."
+    },
+    {
+      "id": "rubygems-dependency-api-deprecation",
+      "registry": "rubygems",
+      "kind": "official-prose",
+      "url": "https://blog.rubygems.org/2023/02/22/dependency-api-deprecation.html",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Official notice that the legacy Dependency API was deprecated and disabled; Depot should not model it as an active primary protocol."
+    },
+    {
+      "id": "rubygems-gem-validator-schema",
+      "registry": "rubygems",
+      "kind": "official-ruby-schema",
+      "url": "https://raw.githubusercontent.com/rubygems/rubygems.org/master/lib/gem_validator/schema.rb",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/rubygems/gem_validator/schema.rb",
+      "blake3": "239b81182b96678bfea3b3448dc57b18d983b9d5adb2edeee786fe9df579ae91",
+      "description": "RubyGems.org schema-like Ruby hash for validating most gemspec metadata and checksums; not standards-compliant JSON Schema."
+    },
+    {
+      "id": "rubygems-gem-specification-reference",
+      "registry": "rubygems",
+      "kind": "official-prose",
+      "url": "https://guides.rubygems.org/specification-reference/",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Official Gem::Specification attribute documentation used to interpret gem metadata fields."
+    },
+    {
+      "id": "nuget-v3-overview",
+      "registry": "nuget",
+      "kind": "official-prose",
+      "url": "https://learn.microsoft.com/en-us/nuget/api/overview",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Microsoft Learn NuGet Server API overview for V3 registry resources."
+    },
+    {
+      "id": "nuget-v3-service-index",
+      "registry": "nuget",
+      "kind": "official-prose",
+      "url": "https://learn.microsoft.com/en-us/nuget/api/service-index",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Microsoft Learn NuGet V3 service index resource documentation."
+    },
+    {
+      "id": "nuget-v3-package-base-address",
+      "registry": "nuget",
+      "kind": "official-prose",
+      "url": "https://learn.microsoft.com/en-us/nuget/api/package-base-address-resource",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Microsoft Learn NuGet PackageBaseAddress resource documentation for version lists, nupkg downloads, and nuspec downloads."
+    },
+    {
+      "id": "nuget-v3-registration",
+      "registry": "nuget",
+      "kind": "official-prose",
+      "url": "https://learn.microsoft.com/en-us/nuget/api/registration-base-url-resource",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Microsoft Learn NuGet registration metadata resource documentation."
+    },
+    {
+      "id": "nuget-v3-search",
+      "registry": "nuget",
+      "kind": "official-prose",
+      "url": "https://learn.microsoft.com/en-us/nuget/api/search-query-service-resource",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Microsoft Learn NuGet search query service resource documentation."
+    },
+    {
+      "id": "nuget-v3-catalog",
+      "registry": "nuget",
+      "kind": "official-prose",
+      "url": "https://learn.microsoft.com/en-us/nuget/api/catalog-resource",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Microsoft Learn NuGet catalog resource documentation; useful for compatibility evidence, not required for restore MVP."
+    },
+    {
+      "id": "nuget-nuspec-xsd",
+      "registry": "nuget",
+      "kind": "official-xml-schema",
+      "url": "https://raw.githubusercontent.com/NuGet/NuGet.Client/dev/src/NuGet.Core/NuGet.Packaging/compiler/resources/nuspec.xsd",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/nuget/nuspec.xsd",
+      "blake3": "862672fbfd1183cf858b632650e9554a7763f3dfd54e04f055f69379800dc659",
+      "description": "NuGet.Client NuSpec XML Schema for .nuspec package metadata."
+    },
+    {
+      "id": "pub-hosted-repository-v2",
+      "registry": "pub",
+      "kind": "official-prose",
+      "url": "https://github.com/dart-lang/pub/blob/master/doc/repository-spec-v2.md",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Official Hosted Pub Repository Specification v2 for package metadata, archive download, publish, and advisories endpoints."
+    },
+    {
+      "id": "pub-dev-supported-api",
+      "registry": "pub",
+      "kind": "official-prose",
+      "url": "https://github.com/dart-lang/pub-dev/blob/master/doc/help-api.md",
+      "official": true,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Officially supported pub.dev developer API documentation; references Hosted Pub Repository Specification v2 for pub client APIs."
+    },
+    {
+      "id": "pub-dev-package-api-dtos",
+      "registry": "pub",
+      "kind": "official-dart-source",
+      "url": "https://raw.githubusercontent.com/dart-lang/pub-dev/master/pkg/_pub_shared/lib/data/package_api.dart",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/pub/pub-dev/package_api.dart",
+      "blake3": "b225c1e1e11337cde4b8189821c220b4dc1ede5ab00e7621c593fc50e104e077",
+      "description": "pub.dev JsonSerializable DTO source for package/version/upload response shapes; supporting implementation evidence, not an official schema."
+    },
+    {
+      "id": "osv-schema",
+      "registry": "pub",
+      "kind": "official-json-schema",
+      "url": "https://raw.githubusercontent.com/ossf/osv-schema/main/validation/schema.json",
+      "official": true,
+      "fetched": true,
+      "path": "upstream/osv/schema.json",
+      "blake3": "0318da148c93bcb7c2a62976dbadfc1e6de265eb13aba335e54e72b5bf86d7bc",
+      "description": "OSV JSON Schema referenced by Hosted Pub Repository Specification v2 for package security advisories only."
+    },
+    {
+      "id": "depot-config",
+      "registry": "depot",
+      "kind": "depot-rust-type",
+      "url": "crates/depot-core/src/config.rs",
+      "official": false,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Depot-owned configuration Rust type."
+    },
+    {
+      "id": "depot-lockfile",
+      "registry": "depot",
+      "kind": "depot-rust-type",
+      "url": "crates/depot-core/src/lockfile.rs",
+      "official": false,
+      "fetched": false,
+      "path": null,
+      "blake3": null,
+      "description": "Depot-owned lockfile Rust type."
+    }
+  ],
+  "schemas": [
+    {
+      "id": "pypi-simple-project",
+      "registry": "pypi",
+      "path": "registries/pypi.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::pypi::PypiProject",
+      "source_file": "crates/depot-core/src/registry/pypi.rs",
+      "source_ids": [
+        "pypa-specifications-index",
+        "pypi-simple-api",
+        "pypi-core-metadata",
+        "pypi-name-normalization",
+        "pypi-binary-distribution-format",
+        "pypi-source-distribution-format",
+        "pypi-json-api"
+      ],
+      "source_kinds": [
+        "official-prose-index",
+        "official-prose",
+        "official-schema-index"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance",
+      "blake3": "ffd02e2ec06ffe5629ebcaa0cc473dd29895522e3e5e7c1de7a57054a2c68eb2"
+    },
+    {
+      "id": "pypi-simple-index",
+      "registry": "pypi",
+      "path": "registries/pypi-index.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::pypi::PypiIndex",
+      "source_file": "crates/depot-core/src/registry/pypi.rs",
+      "source_ids": [
+        "pypa-specifications-index",
+        "pypi-simple-api",
+        "pypi-name-normalization"
+      ],
+      "source_kinds": [
+        "official-prose-index",
+        "official-prose"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance",
+      "blake3": "fc4bafe03398c29c722edf9f9fee522e0043712b15165c89ab14220fdcd3d0e5"
+    },
+    {
+      "id": "npm-packument",
+      "registry": "npm",
+      "path": "registries/npm.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::npm::NpmPackument",
+      "source_file": "crates/depot-core/src/registry/npm.rs",
+      "source_ids": [
+        "npm-package-metadata",
+        "npm-types"
+      ],
+      "source_kinds": [
+        "official-prose",
+        "official-typescript"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance",
+      "blake3": "1486ae56b139a037c6523b90030bcd22c29370b5793b59a2677f48af0ca1e85a"
+    },
+    {
+      "id": "cargo-sparse-index-entry",
+      "registry": "cargo",
+      "path": "registries/cargo.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::cargo::CargoIndexEntry",
+      "source_file": "crates/depot-core/src/registry/cargo.rs",
+      "source_ids": [
+        "cargo-registry-index"
+      ],
+      "source_kinds": [
+        "official-prose"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance",
+      "blake3": "e288ec4e380acd0e20b03e96716c81455609f753305100abdcd8aee3aae3fbb5"
+    },
+    {
+      "id": "cargo-config",
+      "registry": "cargo",
+      "path": "registries/cargo-config.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::cargo::CargoConfig",
+      "source_file": "crates/depot-core/src/registry/cargo.rs",
+      "source_ids": [
+        "cargo-registry-index"
+      ],
+      "source_kinds": [
+        "official-prose"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance",
+      "blake3": "ee3da725b27f30b0eae3d4e5e5f73d3e0f4dfb750d9da5ba38e50a2976887160"
+    },
+    {
+      "id": "hex-package-http-api",
+      "registry": "hex",
+      "path": "registries/hex.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::hex::HexPackage",
+      "source_file": "crates/depot-core/src/registry/hex.rs",
+      "source_ids": [
+        "hex-registry-v2",
+        "hex-package-proto",
+        "hex-package-metadata"
+      ],
+      "source_kinds": [
+        "official-prose",
+        "official-protobuf"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance",
+      "blake3": "54ced73fe9b04f36c9a80ba28c02f6fbfc289c979b2eb2151897139d60b5b4bc"
+    },
+    {
+      "id": "depot-config",
+      "registry": "depot",
+      "path": "depot/config.schema.json",
+      "schema_kind": "depot-owned-json-schema",
+      "source_type": "depot_core::config::Config",
+      "source_file": "crates/depot-core/src/config.rs",
+      "source_ids": [
+        "depot-config"
+      ],
+      "source_kinds": [
+        "depot-rust-type"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs",
+      "blake3": "b8630523574e0b44201248775d672a27750654290e2408ab596653ba7ec42696"
+    },
+    {
+      "id": "nuget-v3-service-index",
+      "registry": "nuget",
+      "path": "registries/nuget-service-index.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::nuget::NugetServiceIndex",
+      "source_file": "crates/depot-core/src/registry/nuget.rs",
+      "source_ids": [
+        "nuget-v3-overview",
+        "nuget-v3-service-index"
+      ],
+      "source_kinds": [
+        "official-prose"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs",
+      "blake3": "92a3a497e046e52d84b304a33dacb8e917e246d2ffd90bdb8017ef2060f0cff1"
+    },
+    {
+      "id": "nuget-v3-package-base-address",
+      "registry": "nuget",
+      "path": "registries/nuget-package-base-address.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::nuget::NugetPackageVersions",
+      "source_file": "crates/depot-core/src/registry/nuget.rs",
+      "source_ids": [
+        "nuget-v3-overview",
+        "nuget-v3-package-base-address"
+      ],
+      "source_kinds": [
+        "official-prose"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs",
+      "blake3": "5a5b00f2799167e73b93ac3fd26545dc6c4f89b2783701e21f7dda1201ac7b15"
+    },
+    {
+      "id": "nuget-v3-registration",
+      "registry": "nuget",
+      "path": "registries/nuget-registration.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::nuget::NugetRegistrationIndex",
+      "source_file": "crates/depot-core/src/registry/nuget.rs",
+      "source_ids": [
+        "nuget-v3-overview",
+        "nuget-v3-registration",
+        "nuget-nuspec-xsd"
+      ],
+      "source_kinds": [
+        "official-prose",
+        "official-xml-schema"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs",
+      "blake3": "6daeedbd4c13877def313d1ba95dd7a34a029254787030bd2620bd74d47d648a"
+    },
+    {
+      "id": "pub-package",
+      "registry": "pub",
+      "path": "registries/pub-package.schema.json",
+      "schema_kind": "depot-derived-json-schema",
+      "source_type": "depot_core::registry::pubdev::PubPackage",
+      "source_file": "crates/depot-core/src/registry/pubdev.rs",
+      "source_ids": [
+        "pub-hosted-repository-v2",
+        "pub-dev-supported-api",
+        "pub-dev-package-api-dtos"
+      ],
+      "source_kinds": [
+        "official-prose",
+        "official-dart-source"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs",
+      "blake3": "b3f9d98cebae02856a0b77317575a71a4e3c4cffd0546e1a1e9fe8cda90dfcfc"
+    },
+    {
+      "id": "depot-lockfile",
+      "registry": "depot",
+      "path": "depot/lockfile.schema.json",
+      "schema_kind": "depot-owned-json-schema",
+      "source_type": "depot_core::lockfile::LockFile",
+      "source_file": "crates/depot-core/src/lockfile.rs",
+      "source_ids": [
+        "depot-lockfile"
+      ],
+      "source_kinds": [
+        "depot-rust-type"
+      ],
+      "generated_by": "depot-schema-manager",
+      "validated_by": "crates/depot-core/tests/schema_validation.rs",
+      "blake3": "08b4f0d8b834dc26f29a8a7aa6bc928e75813aad7ef92e27a98f34060220ead2"
+    }
+  ]
+}

@@ -35,6 +35,50 @@ tasks:
     cmds:
       - cargo run -p depot-test-generator -- --fixtures crates/depot-core/testing_data --output crates/depot-core/tests/generated_tests.rs
 
+  schema:fetch:
+    desc: Download pinned official registry schema/spec artifacts
+    cmds:
+      - cargo run -p depot-schema-manager -- fetch
+
+  schema:generate:
+    desc: Generate Depot JSON schemas and schema manifest
+    cmds:
+      - cargo run -p depot-schema-manager -- generate
+
+  schema:refresh:
+    desc: Download upstream schema/spec artifacts and regenerate schemas
+    cmds:
+      - cargo run -p depot-schema-manager -- refresh
+
+  schema:check:
+    desc: Verify fetched schema/spec artifacts and generated schemas are current
+    cmds:
+      - cargo run -p depot-schema-manager -- fetch --check
+      - cargo run -p depot-schema-manager -- generate --check
+
+  schema:validate:
+    desc: Validate schema files against representative fixtures
+    cmds:
+      - cargo test -p depot-core --test schema_validation
+
+  conformance:
+    desc: Run fixture-based registry conformance tests
+    cmds:
+      - cargo test -p depot-conformance-tests
+
+  generate:
+    desc: Regenerate committed artifacts
+    cmds:
+      - task: schema:generate
+      - task: test:generate
+
+  check:
+    desc: Run generated artifact checks and tests
+    cmds:
+      - task: schema:check
+      - task: conformance
+      - task: test:all
+
   test:all:
     desc: Run all tests
     cmds:

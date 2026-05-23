@@ -1,8 +1,10 @@
 use axum::Router;
+use axum::middleware;
 use tower_http::compression::CompressionLayer;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
+use crate::middleware::auth;
 use crate::state::AppState;
 
 /// Build the axum application with all middleware and adapter routes.
@@ -30,6 +32,10 @@ pub fn build_app(state: AppState) -> Router {
     }
 
     app.layer(CompressionLayer::new())
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth::require_bearer_token,
+        ))
         // TODO: replace CorsLayer::permissive() with a restrictive policy before production use
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())

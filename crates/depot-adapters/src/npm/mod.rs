@@ -191,7 +191,8 @@ async fn serve_tarball<S: HasNpmState>(
 /// Expected format: `{name}-{version}.tgz` where name may contain `@scope/`.
 fn extract_version_from_filename(name: &str, filename: &str) -> Option<String> {
     let stripped = filename.strip_suffix(".tgz")?;
-    let prefix = format!("{name}-");
+    let package_basename = name.rsplit_once('/').map_or(name, |(_, basename)| basename);
+    let prefix = format!("{package_basename}-");
     let version = stripped.strip_prefix(&prefix)?;
     if version.is_empty() {
         return None;
@@ -226,7 +227,7 @@ mod tests {
     #[test]
     fn should_extract_version_from_scoped_filename() {
         assert_eq!(
-            extract_version_from_filename("@scope/pkg", "@scope/pkg-1.2.3.tgz"),
+            extract_version_from_filename("@scope/pkg", "pkg-1.2.3.tgz"),
             Some("1.2.3".to_string())
         );
     }

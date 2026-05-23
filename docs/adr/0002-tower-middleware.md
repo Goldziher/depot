@@ -12,13 +12,15 @@ Cross-cutting concerns — authentication, rate limiting, request tracing, compr
 
 We use Tower's `Layer`/`Service` abstraction to compose middleware. The stack is assembled in `depot-server/src/app.rs` and wraps all adapter routes.
 
-Middleware stack (outermost first):
+MVP middleware stack (outermost first):
 
 1. **TraceLayer** — structured request/response logging via `tracing`
 2. **CorsLayer** — required for npm web clients and browser-based tooling
-3. **Rate limiting** — per-IP request throttling
-4. **Auth** — optional bearer token validation
-5. **CompressionLayer** — response compression (gzip, brotli, zstd)
+3. **Auth** — optional bearer token validation when `auth.enabled = true`
+4. **CompressionLayer** — response compression (gzip, brotli, zstd)
+
+Rate limiting and integrity response headers are deferred production-hardening
+features. They are not part of the MVP middleware stack.
 
 Protocol adapters are mounted as nested axum routers under path prefixes (`/pypi`, `/npm`, `/cargo`, `/hex`).
 

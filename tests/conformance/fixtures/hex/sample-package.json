@@ -1,0 +1,40 @@
+{
+  "name": "sample_hex",
+  "url": "https://hex.pm/api/packages/sample_hex",
+  "html_url": "https://hex.pm/packages/sample_hex",
+  "docs_html_url": "https://hexdocs.pm/sample_hex",
+  "meta": {
+    "description": "Representative Hex package fixture",
+    "licenses": [
+      "Apache-2.0"
+    ],
+    "links": {
+      "GitHub": "https://github.com/example/sample_hex"
+    },
+    "maintainers": [
+      "Depot Fixtures"
+    ]
+  },
+  "releases": [
+    {
+      "version": "1.0.0",
+      "url": "https://hex.pm/api/packages/sample_hex/releases/1.0.0",
+      "has_docs": true,
+      "inserted_at": "2024-01-01T00:00:00.000000Z",
+      "updated_at": "2024-01-01T00:00:00.000000Z"
+    },
+    {
+      "version": "1.1.0",
+      "url": "https://hex.pm/api/packages/sample_hex/releases/1.1.0",
+      "has_docs": false,
+      "retirement": {
+        "reason": "security",
+        "message": "replaced by 1.1.1"
+      },
+      "inserted_at": "2024-02-01T00:00:00.000000Z",
+      "updated_at": "2024-02-02T00:00:00.000000Z"
+    }
+  ],
+  "inserted_at": "2024-01-01T00:00:00.000000Z",
+  "updated_at": "2024-02-02T00:00:00.000000Z"
+}

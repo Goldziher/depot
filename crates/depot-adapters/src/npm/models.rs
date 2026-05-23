@@ -31,7 +31,7 @@ pub fn extract_version_metadata(
     let ver = packument["versions"].get(version)?;
     let dist = &ver["dist"];
 
-    let filename = format!("{}-{version}.tgz", name.as_str());
+    let filename = format!("{}-{version}.tgz", tarball_name(name.as_str()));
 
     let mut upstream_hashes = AHashMap::new();
     if let Some(shasum) = dist["shasum"].as_str() {
@@ -72,13 +72,20 @@ pub fn extract_version_metadata(
 /// exactly as received from upstream.
 pub fn rewrite_packument_tarball_urls(packument: &mut serde_json::Value, base_url: &str) {
     let pkg_name = packument["name"].as_str().unwrap_or("unknown").to_string();
+    let tarball_name = tarball_name(&pkg_name);
     if let Some(versions) = packument["versions"].as_object_mut() {
         for (ver_str, ver_obj) in versions.iter_mut() {
-            let tarball_filename = format!("{pkg_name}-{ver_str}.tgz");
+            let tarball_filename = format!("{tarball_name}-{ver_str}.tgz");
             let new_url = format!("{base_url}/npm/{pkg_name}/-/{tarball_filename}");
             ver_obj["dist"]["tarball"] = serde_json::Value::String(new_url);
         }
     }
+}
+
+fn tarball_name(package_name: &str) -> &str {
+    package_name
+        .rsplit_once('/')
+        .map_or(package_name, |(_, name)| name)
 }
 
 #[cfg(test)]
@@ -165,6 +172,30 @@ mod tests {
         assert_eq!(
             packument["versions"]["1.0.0"]["dependencies"]["is-number"],
             "^4.0.0"
+        );
+    }
+
+    #[test]
+    fn should_rewrite_scoped_tarball_urls_with_basename_filename() {
+        let mut packument = serde_json::json!({
+            "name": "@scope/sample",
+            "versions": {
+                "2.0.0": {
+                    "name": "@scope/sample",
+                    "version": "2.0.0",
+                    "dist": {
+                        "tarball": "https://registry.npmjs.org/@scope/sample/-/sample-2.0.0.tgz",
+                        "shasum": "abc123"
+                    }
+                }
+            }
+        });
+
+        rewrite_packument_tarball_urls(&mut packument, "http://localhost:8080");
+
+        assert_eq!(
+            packument["versions"]["2.0.0"]["dist"]["tarball"],
+            "http://localhost:8080/npm/@scope/sample/-/sample-2.0.0.tgz"
         );
     }
 

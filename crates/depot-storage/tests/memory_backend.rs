@@ -1,6 +1,7 @@
 #![cfg(feature = "backend-memory")]
 
 use bytes::Bytes;
+use depot_core::config::StorageConfig;
 use depot_core::ports::StoragePort;
 use depot_storage::OpenDalStorage;
 
@@ -159,4 +160,21 @@ async fn list_prefix_keys() {
         empty_keys.is_empty(),
         "should list 0 keys under non-existent prefix"
     );
+}
+
+#[tokio::test]
+async fn from_config_builds_memory_backend() {
+    let config = StorageConfig {
+        backend: "memory".to_string(),
+        ..Default::default()
+    };
+    let storage = OpenDalStorage::from_config(&config).expect("memory backend should build");
+
+    storage
+        .put("key", Bytes::from_static(b"value"))
+        .await
+        .expect("put should succeed");
+    let value = storage.get("key").await.expect("get should succeed");
+
+    assert_eq!(value, Some(Bytes::from_static(b"value")));
 }

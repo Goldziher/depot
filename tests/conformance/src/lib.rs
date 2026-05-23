@@ -1,0 +1,1 @@
+//! Local registry conformance fixtures.

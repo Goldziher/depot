@@ -12,7 +12,18 @@ Depot must store package artifacts on user-chosen backends: local filesystem for
 
 We use [Apache OpenDAL](https://opendal.apache.org/) as the storage abstraction layer. OpenDAL provides a unified `Operator` API across 30+ storage services. Our `StoragePort` trait wraps an OpenDAL `Operator`, translating between depot's domain types and OpenDAL's API.
 
-Storage backends are selected via feature flags:
+Storage backends are configured dynamically with an OpenDAL service name and
+string options:
+
+```toml
+[storage]
+backend = "fs"
+
+[storage.options]
+root = "./depot-data"
+```
+
+Available services are still controlled by feature flags:
 
 - `backend-fs` (default) — local filesystem
 - `backend-s3` — S3-compatible (AWS, MinIO, R2)
@@ -21,6 +32,6 @@ Storage backends are selected via feature flags:
 
 ## Consequences
 
-- Adding a new storage backend is typically a one-line feature flag addition — OpenDAL already supports it.
+- Adding a new storage backend is typically a feature flag and documentation addition — OpenDAL already supports the runtime option map.
 - We depend on a large external crate, but it's well-maintained (Apache project) and the feature-flag gating keeps binary size manageable.
 - The `StoragePort` trait keeps our core decoupled from OpenDAL, so swapping it out (unlikely) would only affect `depot-storage`.

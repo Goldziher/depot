@@ -1,72 +1,250 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title": "Depot Configuration",
-	"description": "Configuration file schema for depot (depot.toml)",
-	"type": "object",
-	"properties": {
-		"server": {
-			"type": "object",
-			"properties": {
-				"bind": { "type": "string", "default": "0.0.0.0:8080" }
-			}
-		},
-		"storage": {
-			"type": "object",
-			"properties": {
-				"backend": {
-					"type": "string",
-					"enum": ["fs", "s3", "gcs", "memory"],
-					"default": "fs"
-				},
-				"path": { "type": ["string", "null"] },
-				"s3": {
-					"type": ["object", "null"],
-					"properties": {
-						"bucket": { "type": "string" },
-						"region": { "type": "string" },
-						"endpoint": { "type": ["string", "null"] }
-					},
-					"required": ["bucket", "region"]
-				}
-			}
-		},
-		"upstream": {
-			"type": "object",
-			"additionalProperties": {
-				"type": "object",
-				"required": ["url"],
-				"properties": {
-					"enabled": { "type": "boolean", "default": true },
-					"url": { "type": "string", "format": "uri" }
-				}
-			}
-		},
-		"policies": {
-			"type": "object",
-			"properties": {
-				"block_unlicensed": { "type": "boolean", "default": false },
-				"max_vuln_severity": {
-					"type": "string",
-					"enum": ["low", "medium", "high", "critical"],
-					"default": "critical"
-				},
-				"allowed_licenses": { "type": "array", "items": { "type": "string" } },
-				"blocked_packages": { "type": "array", "items": { "type": "string" } }
-			}
-		},
-		"auth": {
-			"type": "object",
-			"properties": {
-				"enabled": { "type": "boolean", "default": false },
-				"tokens": { "type": "array", "items": { "type": "string" } }
-			}
-		},
-		"encryption": {
-			"type": "object",
-			"properties": {
-				"enabled": { "type": "boolean", "default": false },
-				"key_file": { "type": ["string", "null"] }
-			}
-		}
-	}
+  "$defs": {
+    "AuthConfig": {
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "tokens": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "EncryptionConfig": {
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "key_file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "GcsConfig": {
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "credential_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "endpoint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "bucket"
+      ],
+      "type": "object"
+    },
+    "PolicyConfig": {
+      "properties": {
+        "allowed_licenses": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "block_unlicensed": {
+          "default": false,
+          "type": "boolean"
+        },
+        "blocked_packages": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "max_vuln_severity": {
+          "$ref": "#/$defs/VulnSeverity",
+          "default": "critical"
+        }
+      },
+      "type": "object"
+    },
+    "S3Config": {
+      "properties": {
+        "bucket": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "region": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "bucket",
+        "region"
+      ],
+      "type": "object"
+    },
+    "ServerConfig": {
+      "properties": {
+        "bind": {
+          "default": "0.0.0.0:8080",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "StorageConfig": {
+      "properties": {
+        "backend": {
+          "default": "fs",
+          "type": "string"
+        },
+        "gcs": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GcsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "options": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "type": "object"
+        },
+        "path": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "s3": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/S3Config"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "type": "object"
+    },
+    "UpstreamConfig": {
+      "properties": {
+        "enabled": {
+          "default": true,
+          "type": "boolean"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "type": "object"
+    },
+    "VulnSeverity": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "type": "string"
+    }
+  },
+  "$id": "https://schemas.depot.local/depot/config.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-owned JSON Schema for depot.toml.",
+  "properties": {
+    "auth": {
+      "$ref": "#/$defs/AuthConfig",
+      "default": {
+        "enabled": false,
+        "tokens": []
+      }
+    },
+    "encryption": {
+      "$ref": "#/$defs/EncryptionConfig",
+      "default": {
+        "enabled": false,
+        "key_file": null
+      }
+    },
+    "policies": {
+      "$ref": "#/$defs/PolicyConfig",
+      "default": {
+        "allowed_licenses": [],
+        "block_unlicensed": false,
+        "blocked_packages": [],
+        "max_vuln_severity": "critical"
+      }
+    },
+    "server": {
+      "$ref": "#/$defs/ServerConfig",
+      "default": {
+        "bind": "0.0.0.0:8080"
+      }
+    },
+    "storage": {
+      "$ref": "#/$defs/StorageConfig",
+      "default": {
+        "backend": "fs",
+        "gcs": null,
+        "options": {},
+        "path": null,
+        "s3": null
+      }
+    },
+    "upstream": {
+      "additionalProperties": {
+        "$ref": "#/$defs/UpstreamConfig"
+      },
+      "default": {},
+      "type": "object"
+    }
+  },
+  "title": "Depot Configuration",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-owned-json-schema",
+    "source_file": "crates/depot-core/src/config.rs",
+    "source_ids": [
+      "depot-config"
+    ],
+    "source_kinds": [
+      "depot-rust-type"
+    ],
+    "source_type": "depot_core::config::Config",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs"
+  }
 }

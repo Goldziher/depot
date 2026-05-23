@@ -46,17 +46,23 @@ pub struct StorageConfig {
     #[serde(default = "default_backend")]
     pub backend: String,
     #[serde(default)]
+    pub options: HashMap<String, String>,
+    #[serde(default)]
     pub path: Option<PathBuf>,
     #[serde(default)]
     pub s3: Option<S3Config>,
+    #[serde(default)]
+    pub gcs: Option<GcsConfig>,
 }
 
 impl Default for StorageConfig {
     fn default() -> Self {
         Self {
             backend: default_backend(),
+            options: HashMap::new(),
             path: None,
             s3: None,
+            gcs: None,
         }
     }
 }
@@ -70,6 +76,63 @@ pub struct S3Config {
     pub bucket: String,
     pub region: String,
     pub endpoint: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct GcsConfig {
+    pub bucket: String,
+    pub credential_path: Option<PathBuf>,
+    pub endpoint: Option<String>,
+}
+
+impl StorageConfig {
+    pub fn opendal_options(&self) -> HashMap<String, String> {
+        let mut options = self.options.clone();
+
+        if self.backend == "fs"
+            && let Some(path) = &self.path
+        {
+            options
+                .entry("root".to_string())
+                .or_insert_with(|| path.to_string_lossy().to_string());
+        }
+
+        if self.backend == "s3"
+            && let Some(s3) = &self.s3
+        {
+            options
+                .entry("bucket".to_string())
+                .or_insert_with(|| s3.bucket.clone());
+            options
+                .entry("region".to_string())
+                .or_insert_with(|| s3.region.clone());
+            if let Some(endpoint) = &s3.endpoint {
+                options
+                    .entry("endpoint".to_string())
+                    .or_insert_with(|| endpoint.clone());
+            }
+        }
+
+        if self.backend == "gcs"
+            && let Some(gcs) = &self.gcs
+        {
+            options
+                .entry("bucket".to_string())
+                .or_insert_with(|| gcs.bucket.clone());
+            if let Some(path) = &gcs.credential_path {
+                options
+                    .entry("credential_path".to_string())
+                    .or_insert_with(|| path.to_string_lossy().to_string());
+            }
+            if let Some(endpoint) = &gcs.endpoint {
+                options
+                    .entry("endpoint".to_string())
+                    .or_insert_with(|| endpoint.clone());
+            }
+        }
+
+        options
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -137,6 +200,22 @@ impl Config {
         }
 
         Ok(Self::default())
+    }
+
+    pub fn validate_mvp(&self) -> Result<()> {
+        if self.encryption.enabled {
+            return Err(DepotError::Config(
+                "at-rest encryption is not implemented in this MVP".to_string(),
+            ));
+        }
+
+        if self.auth.enabled && self.auth.tokens.is_empty() {
+            return Err(DepotError::Config(
+                "auth.enabled requires at least one bearer token".to_string(),
+            ));
+        }
+
+        Ok(())
     }
 }
 
@@ -223,6 +302,11 @@ mod tests {
                     bucket,
                     "fixture '{name}' s3 bucket"
                 );
+                assert_eq!(
+                    config.storage.opendal_options().get("bucket"),
+                    Some(&bucket.to_string()),
+                    "fixture '{name}' s3 bucket option"
+                );
             }
             if let Some(block) = fix["expected"]["block_unlicensed"].as_bool() {
                 assert_eq!(
@@ -259,5 +343,44 @@ mod tests {
         assert!(config.upstream.contains_key("npm"));
         assert!(config.upstream.contains_key("cargo"));
         assert!(config.upstream.contains_key("hex"));
+    }
+
+    #[test]
+    fn storage_options_are_preserved() {
+        let config: Config =
+            toml::from_str("[storage]\nbackend = \"gcs\"\n\n[storage.options]\nbucket = \"pkg-cache\"\ncredential_path = \"/tmp/gcs.json\"\n")
+                .unwrap();
+
+        let options = config.storage.opendal_options();
+        assert_eq!(options.get("bucket"), Some(&"pkg-cache".to_string()));
+        assert_eq!(
+            options.get("credential_path"),
+            Some(&"/tmp/gcs.json".to_string())
+        );
+    }
+
+    #[test]
+    fn legacy_fs_path_maps_to_root_option() {
+        let config: Config =
+            toml::from_str("[storage]\nbackend = \"fs\"\npath = \"./cache\"\n").unwrap();
+
+        assert_eq!(
+            config.storage.opendal_options().get("root"),
+            Some(&"./cache".to_string())
+        );
+    }
+
+    #[test]
+    fn startup_validation_rejects_empty_auth_tokens() {
+        let config: Config = toml::from_str("[auth]\nenabled = true\n").unwrap();
+        let err = config.validate_mvp().unwrap_err().to_string();
+        assert!(err.contains("auth.enabled requires"));
+    }
+
+    #[test]
+    fn startup_validation_rejects_encryption() {
+        let config: Config = toml::from_str("[encryption]\nenabled = true\n").unwrap();
+        let err = config.validate_mvp().unwrap_err().to_string();
+        assert!(err.contains("encryption is not implemented"));
     }
 }

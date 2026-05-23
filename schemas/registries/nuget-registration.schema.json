@@ -1,0 +1,225 @@
+{
+  "$defs": {
+    "NugetCatalogEntry": {
+      "additionalProperties": true,
+      "description": "NuGet catalog entry subset used by registration metadata.",
+      "properties": {
+        "@id": {
+          "type": "string"
+        },
+        "authors": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dependencyGroups": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/NugetDependencyGroup"
+          },
+          "type": "array"
+        },
+        "description": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "licenseExpression": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "listed": {
+          "default": null,
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "projectUrl": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "@id",
+        "id",
+        "version"
+      ],
+      "type": "object"
+    },
+    "NugetDependency": {
+      "description": "A NuGet package dependency.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "range": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "registration": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "NugetDependencyGroup": {
+      "description": "A NuGet dependency group inside registration metadata.",
+      "properties": {
+        "dependencies": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/NugetDependency"
+          },
+          "type": "array"
+        },
+        "targetFramework": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "NugetRegistrationLeaf": {
+      "description": "A leaf entry in NuGet registration metadata.",
+      "properties": {
+        "@id": {
+          "type": "string"
+        },
+        "catalogEntry": {
+          "$ref": "#/$defs/NugetCatalogEntry"
+        },
+        "packageContent": {
+          "type": "string"
+        },
+        "registration": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "@id",
+        "catalogEntry",
+        "packageContent"
+      ],
+      "type": "object"
+    },
+    "NugetRegistrationPage": {
+      "description": "A page in a NuGet registration index.",
+      "properties": {
+        "@id": {
+          "type": "string"
+        },
+        "count": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "items": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/NugetRegistrationLeaf"
+          },
+          "type": "array"
+        },
+        "lower": {
+          "type": "string"
+        },
+        "upper": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "@id",
+        "count",
+        "lower",
+        "upper"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.depot.local/registries/nuget-registration.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-derived JSON Schema for NuGet V3 registration metadata.",
+  "properties": {
+    "@context": {
+      "default": null
+    },
+    "@id": {
+      "type": "string"
+    },
+    "count": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/NugetRegistrationPage"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "@id",
+    "count",
+    "items"
+  ],
+  "title": "NuGet V3 Registration Index",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-derived-json-schema",
+    "source_file": "crates/depot-core/src/registry/nuget.rs",
+    "source_ids": [
+      "nuget-v3-overview",
+      "nuget-v3-registration",
+      "nuget-nuspec-xsd"
+    ],
+    "source_kinds": [
+      "official-prose",
+      "official-xml-schema"
+    ],
+    "source_type": "depot_core::registry::nuget::NugetRegistrationIndex",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs"
+  }
+}

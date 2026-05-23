@@ -17,7 +17,7 @@ hex = ["depot-adapters/hex"]
 
 [dependencies]
 axum.workspace = true
-depot-adapters.workspace = true
+depot-adapters = { workspace = true, default-features = false }
 depot-core.workspace = true
 depot-storage.workspace = true
 tokio.workspace = true

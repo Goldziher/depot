@@ -2,12 +2,17 @@ use std::sync::Arc;
 
 use ahash::AHashMap;
 use async_trait::async_trait;
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
 use bytes::Bytes;
 use depot_core::error::{DepotError, Result};
 use depot_core::integrity;
-use depot_core::package::{ArtifactId, Ecosystem, PackageName, VersionInfo, VersionMetadata};
+use depot_core::package::{
+    ArtifactDigest, ArtifactId, Ecosystem, PackageName, VersionInfo, VersionMetadata,
+};
 use depot_core::policy::PolicyConfig;
 use depot_core::ports::{PackageService, StoragePort, UpstreamClient};
+use sha2::Digest;
 
 /// Pull-through caching implementation of `PackageService`.
 ///
@@ -38,18 +43,35 @@ impl CachingPackageService {
             .ok_or_else(|| DepotError::Config(format!("no upstream configured for {ecosystem}")))
     }
 
-    fn check_artifact_policy(&self, artifact_id: &ArtifactId) -> Result<()> {
+    fn check_package_allowed(&self, name: &PackageName) -> Result<()> {
         if self
             .policy
             .blocked_packages
             .iter()
-            .any(|b| b == artifact_id.name.as_str())
+            .any(|b| b == name.as_str())
         {
             return Err(DepotError::PolicyViolation(format!(
-                "package {} is blocked",
-                artifact_id.name
+                "package {name} is blocked"
             )));
         }
+        Ok(())
+    }
+
+    fn verify_upstream_hash(data: &Bytes, digest: &ArtifactDigest) -> Result<()> {
+        if let Some(integrity) = digest.upstream_hashes.get("integrity") {
+            return verify_subresource_integrity(data, integrity);
+        }
+
+        if let Some(expected) = digest.upstream_hashes.get("sha256") {
+            let actual = format!("{:x}", sha2::Sha256::digest(data));
+            return verify_hex_digest("sha256", expected, &actual);
+        }
+
+        if let Some(expected) = digest.upstream_hashes.get("sha1") {
+            let actual = format!("{:x}", sha1::Sha1::digest(data));
+            return verify_hex_digest("sha1", expected, &actual);
+        }
+
         Ok(())
     }
 
@@ -73,6 +95,8 @@ impl PackageService for CachingPackageService {
         ecosystem: Ecosystem,
         name: &PackageName,
     ) -> Result<Vec<VersionInfo>> {
+        self.check_package_allowed(name)?;
+
         let key = Self::versions_key(ecosystem, name);
 
         if let Some(cached) = self.storage.get(&key).await? {
@@ -97,6 +121,8 @@ impl PackageService for CachingPackageService {
         name: &PackageName,
         version: &str,
     ) -> Result<VersionMetadata> {
+        self.check_package_allowed(name)?;
+
         let key = Self::metadata_key(ecosystem, name, version);
 
         if let Some(cached) = self.storage.get(&key).await? {
@@ -118,28 +144,42 @@ impl PackageService for CachingPackageService {
     }
 
     async fn get_artifact(&self, artifact_id: &ArtifactId) -> Result<Bytes> {
-        self.check_artifact_policy(artifact_id)?;
+        self.check_package_allowed(&artifact_id.name)?;
+        let metadata = self
+            .get_version_metadata(
+                artifact_id.ecosystem,
+                &artifact_id.name,
+                &artifact_id.version,
+            )
+            .await?;
+        let artifact_digest = metadata
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.filename == artifact_id.filename)
+            .ok_or_else(|| DepotError::ArtifactNotFound(artifact_id.storage_key()))?;
 
         let key = artifact_id.storage_key();
         let hash_key = format!("{key}.blake3");
 
         if let Some(cached) = self.storage.get(&key).await? {
-            if let Some(expected_hash) = self.storage.get(&hash_key).await? {
-                let expected = std::str::from_utf8(&expected_hash)
-                    .map_err(|e| DepotError::Storage(e.to_string()))?;
-                integrity::verify_or_err(&cached, expected)?;
-            } else {
-                tracing::warn!(
-                    key,
-                    "serving artifact without integrity verification (no hash sidecar)"
-                );
-            }
+            let expected_hash =
+                self.storage
+                    .get(&hash_key)
+                    .await?
+                    .ok_or_else(|| DepotError::IntegrityError {
+                        expected: format!("missing sidecar {hash_key}"),
+                        actual: "unverified cached artifact".to_string(),
+                    })?;
+            let expected = std::str::from_utf8(&expected_hash)
+                .map_err(|e| DepotError::Storage(e.to_string()))?;
+            integrity::verify_or_err(&cached, expected)?;
             return Ok(cached);
         }
 
         tracing::info!(key, "fetching artifact from upstream");
         let upstream = self.upstream(artifact_id.ecosystem)?;
         let data = upstream.fetch_artifact(artifact_id).await?;
+        Self::verify_upstream_hash(&data, artifact_digest)?;
 
         let hash = integrity::blake3_hex(&data);
         self.storage.put(&hash_key, Bytes::from(hash)).await?;
@@ -174,6 +214,7 @@ impl PackageService for CachingPackageService {
         ecosystem: Ecosystem,
         name: &PackageName,
     ) -> Result<Option<Bytes>> {
+        self.check_package_allowed(name)?;
         let key = Self::raw_upstream_key(ecosystem, name);
         self.storage.get(&key).await
     }
@@ -184,9 +225,57 @@ impl PackageService for CachingPackageService {
         name: &PackageName,
         data: Bytes,
     ) -> Result<()> {
+        self.check_package_allowed(name)?;
         let key = Self::raw_upstream_key(ecosystem, name);
         self.storage.put(&key, data).await
     }
+}
+
+fn verify_hex_digest(algorithm: &str, expected: &str, actual: &str) -> Result<()> {
+    if expected.eq_ignore_ascii_case(actual) {
+        Ok(())
+    } else {
+        Err(DepotError::IntegrityError {
+            expected: format!("{algorithm}:{expected}"),
+            actual: format!("{algorithm}:{actual}"),
+        })
+    }
+}
+
+fn verify_subresource_integrity(data: &Bytes, integrity_value: &str) -> Result<()> {
+    for token in integrity_value.split_ascii_whitespace() {
+        let Some((algorithm, encoded)) = token.split_once('-') else {
+            continue;
+        };
+
+        let actual = match algorithm {
+            "sha512" => sha2::Sha512::digest(data).to_vec(),
+            "sha384" => sha2::Sha384::digest(data).to_vec(),
+            "sha256" => sha2::Sha256::digest(data).to_vec(),
+            _ => continue,
+        };
+
+        let expected = BASE64_STANDARD
+            .decode(encoded)
+            .map_err(|e| DepotError::IntegrityError {
+                expected: format!("{algorithm}:{encoded}"),
+                actual: format!("invalid SRI digest: {e}"),
+            })?;
+
+        if expected == actual {
+            return Ok(());
+        }
+
+        return Err(DepotError::IntegrityError {
+            expected: format!("{algorithm}:{encoded}"),
+            actual: format!("{algorithm}:mismatch"),
+        });
+    }
+
+    Err(DepotError::IntegrityError {
+        expected: integrity_value.to_string(),
+        actual: "no supported SRI digest".to_string(),
+    })
 }
 
 #[cfg(test)]
@@ -305,6 +394,26 @@ mod tests {
         }
     }
 
+    fn test_metadata_with_artifact(
+        name: &str,
+        version: &str,
+        filename: &str,
+        upstream_hashes: AHashMap<String, String>,
+    ) -> VersionMetadata {
+        VersionMetadata {
+            name: PackageName::new(name),
+            version: version.to_string(),
+            artifacts: vec![ArtifactDigest {
+                filename: filename.to_string(),
+                blake3: String::new(),
+                size: 1024,
+                upstream_hashes,
+            }],
+            license: Some("MIT".to_string()),
+            yanked: false,
+        }
+    }
+
     fn build_service(
         storage: Arc<MockStorage>,
         upstream: MockUpstream,
@@ -325,15 +434,29 @@ mod tests {
             filename: "requests-2.31.0.tar.gz".to_string(),
         };
         let artifact_data = Bytes::from_static(b"fake tarball content");
-        let storage = Arc::new(MockStorage::with_data(vec![(
-            &artifact_id.storage_key(),
-            artifact_data.clone(),
-        )]));
+        let hash = integrity::blake3_hex(&artifact_data);
+        let storage = Arc::new(MockStorage::with_data(vec![
+            (&artifact_id.storage_key(), artifact_data.clone()),
+            (
+                &format!("{}.blake3", artifact_id.storage_key()),
+                Bytes::from(hash),
+            ),
+        ]));
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "2.31.0".to_string(),
+            test_metadata_with_artifact(
+                "requests",
+                "2.31.0",
+                "requests-2.31.0.tar.gz",
+                AHashMap::new(),
+            ),
+        );
 
         let upstream = MockUpstream {
             eco: Ecosystem::PyPI,
             versions: vec![],
-            metadata: AHashMap::new(),
+            metadata,
             artifacts: AHashMap::new(), // Empty: should never be called
         };
 
@@ -348,11 +471,16 @@ mod tests {
         let artifact_data = Bytes::from_static(b"fetched from upstream");
         let mut artifacts = AHashMap::new();
         artifacts.insert("serde-1.0.0.tar.gz".to_string(), artifact_data.clone());
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "1.0.0".to_string(),
+            test_metadata_with_artifact("serde", "1.0.0", "serde-1.0.0.tar.gz", AHashMap::new()),
+        );
 
         let upstream = MockUpstream {
             eco: Ecosystem::Cargo,
             versions: vec![],
-            metadata: AHashMap::new(),
+            metadata,
             artifacts,
         };
 
@@ -492,6 +620,16 @@ mod tests {
         };
         let artifact_data = Bytes::from_static(b"fake tarball content");
         let hash = integrity::blake3_hex(&artifact_data);
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "2.31.0".to_string(),
+            test_metadata_with_artifact(
+                "requests",
+                "2.31.0",
+                "requests-2.31.0.tar.gz",
+                AHashMap::new(),
+            ),
+        );
 
         let storage = Arc::new(MockStorage::with_data(vec![
             (&artifact_id.storage_key(), artifact_data.clone()),
@@ -504,7 +642,7 @@ mod tests {
         let upstream = MockUpstream {
             eco: Ecosystem::PyPI,
             versions: vec![],
-            metadata: AHashMap::new(),
+            metadata,
             artifacts: AHashMap::new(),
         };
 
@@ -526,6 +664,16 @@ mod tests {
         };
         let artifact_data = Bytes::from_static(b"corrupted data");
         let wrong_hash = "0".repeat(64);
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "2.31.0".to_string(),
+            test_metadata_with_artifact(
+                "requests",
+                "2.31.0",
+                "requests-2.31.0.tar.gz",
+                AHashMap::new(),
+            ),
+        );
 
         let storage = Arc::new(MockStorage::with_data(vec![
             (&artifact_id.storage_key(), artifact_data),
@@ -538,7 +686,7 @@ mod tests {
         let upstream = MockUpstream {
             eco: Ecosystem::PyPI,
             versions: vec![],
-            metadata: AHashMap::new(),
+            metadata,
             artifacts: AHashMap::new(),
         };
 
@@ -549,6 +697,48 @@ mod tests {
         assert!(
             err.contains("integrity check failed"),
             "error should be integrity failure, got: {err}"
+        );
+    }
+
+    #[tokio::test]
+    async fn integrity_rejects_cached_artifact_without_sidecar() {
+        let artifact_id = ArtifactId {
+            ecosystem: Ecosystem::PyPI,
+            name: PackageName::new("requests"),
+            version: "2.31.0".to_string(),
+            filename: "requests-2.31.0.tar.gz".to_string(),
+        };
+        let artifact_data = Bytes::from_static(b"unverified data");
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "2.31.0".to_string(),
+            test_metadata_with_artifact(
+                "requests",
+                "2.31.0",
+                "requests-2.31.0.tar.gz",
+                AHashMap::new(),
+            ),
+        );
+
+        let storage = Arc::new(MockStorage::with_data(vec![(
+            &artifact_id.storage_key(),
+            artifact_data,
+        )]));
+
+        let upstream = MockUpstream {
+            eco: Ecosystem::PyPI,
+            versions: vec![],
+            metadata,
+            artifacts: AHashMap::new(),
+        };
+
+        let service = build_service(storage, upstream, PolicyConfig::default());
+        let result = service.get_artifact(&artifact_id).await;
+        assert!(result.is_err(), "should reject unverified cached artifact");
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("missing sidecar"),
+            "error should mention missing sidecar, got: {err}"
         );
     }
 
@@ -599,11 +789,16 @@ mod tests {
         let expected_hash = integrity::blake3_hex(&artifact_data);
         let mut artifacts = AHashMap::new();
         artifacts.insert("pkg-1.0.0.tar.gz".to_string(), artifact_data.clone());
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "1.0.0".to_string(),
+            test_metadata_with_artifact("pkg", "1.0.0", "pkg-1.0.0.tar.gz", AHashMap::new()),
+        );
 
         let upstream = MockUpstream {
             eco: Ecosystem::Cargo,
             versions: vec![],
-            metadata: AHashMap::new(),
+            metadata,
             artifacts,
         };
 
@@ -630,5 +825,167 @@ mod tests {
             expected_hash,
             "stored hash should match computed blake3"
         );
+    }
+
+    #[tokio::test]
+    async fn upstream_sha256_verified_before_cache_store() {
+        let storage = Arc::new(MockStorage::new());
+        let artifact_data = Bytes::from_static(b"upstream content");
+        let sha256 = format!("{:x}", sha2::Sha256::digest(&artifact_data));
+        let mut upstream_hashes = AHashMap::new();
+        upstream_hashes.insert("sha256".to_string(), sha256);
+
+        let mut artifacts = AHashMap::new();
+        artifacts.insert("pkg-1.0.0.tar.gz".to_string(), artifact_data.clone());
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "1.0.0".to_string(),
+            test_metadata_with_artifact("pkg", "1.0.0", "pkg-1.0.0.tar.gz", upstream_hashes),
+        );
+
+        let upstream = MockUpstream {
+            eco: Ecosystem::PyPI,
+            versions: vec![],
+            metadata,
+            artifacts,
+        };
+
+        let service = build_service(storage, upstream, PolicyConfig::default());
+        let artifact_id = ArtifactId {
+            ecosystem: Ecosystem::PyPI,
+            name: PackageName::new("pkg"),
+            version: "1.0.0".to_string(),
+            filename: "pkg-1.0.0.tar.gz".to_string(),
+        };
+
+        let result = service.get_artifact(&artifact_id).await.unwrap();
+        assert_eq!(result, artifact_data);
+    }
+
+    #[tokio::test]
+    async fn upstream_sha256_mismatch_rejected() {
+        let storage = Arc::new(MockStorage::new());
+        let artifact_data = Bytes::from_static(b"upstream content");
+        let mut upstream_hashes = AHashMap::new();
+        upstream_hashes.insert("sha256".to_string(), "0".repeat(64));
+
+        let mut artifacts = AHashMap::new();
+        artifacts.insert("pkg-1.0.0.tar.gz".to_string(), artifact_data);
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "1.0.0".to_string(),
+            test_metadata_with_artifact("pkg", "1.0.0", "pkg-1.0.0.tar.gz", upstream_hashes),
+        );
+
+        let upstream = MockUpstream {
+            eco: Ecosystem::Cargo,
+            versions: vec![],
+            metadata,
+            artifacts,
+        };
+
+        let service = build_service(storage.clone(), upstream, PolicyConfig::default());
+        let artifact_id = ArtifactId {
+            ecosystem: Ecosystem::Cargo,
+            name: PackageName::new("pkg"),
+            version: "1.0.0".to_string(),
+            filename: "pkg-1.0.0.tar.gz".to_string(),
+        };
+
+        let result = service.get_artifact(&artifact_id).await;
+        assert!(result.is_err(), "should reject upstream hash mismatch");
+        assert!(
+            storage
+                .get(&artifact_id.storage_key())
+                .await
+                .unwrap()
+                .is_none(),
+            "mismatched artifact must not be cached"
+        );
+    }
+
+    #[tokio::test]
+    async fn upstream_npm_sri_verified_before_cache_store() {
+        let storage = Arc::new(MockStorage::new());
+        let artifact_data = Bytes::from_static(b"npm tarball");
+        let sri = format!(
+            "sha512-{}",
+            BASE64_STANDARD.encode(sha2::Sha512::digest(&artifact_data))
+        );
+        let mut upstream_hashes = AHashMap::new();
+        upstream_hashes.insert("integrity".to_string(), sri);
+
+        let mut artifacts = AHashMap::new();
+        artifacts.insert("pkg-1.0.0.tgz".to_string(), artifact_data.clone());
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "1.0.0".to_string(),
+            test_metadata_with_artifact("pkg", "1.0.0", "pkg-1.0.0.tgz", upstream_hashes),
+        );
+
+        let upstream = MockUpstream {
+            eco: Ecosystem::Npm,
+            versions: vec![],
+            metadata,
+            artifacts,
+        };
+
+        let service = build_service(storage, upstream, PolicyConfig::default());
+        let artifact_id = ArtifactId {
+            ecosystem: Ecosystem::Npm,
+            name: PackageName::new("pkg"),
+            version: "1.0.0".to_string(),
+            filename: "pkg-1.0.0.tgz".to_string(),
+        };
+
+        let result = service.get_artifact(&artifact_id).await.unwrap();
+        assert_eq!(result, artifact_data);
+    }
+
+    #[tokio::test]
+    async fn license_policy_blocks_artifact_download() {
+        let storage = Arc::new(MockStorage::new());
+        let artifact_data = Bytes::from_static(b"package");
+        let mut artifacts = AHashMap::new();
+        artifacts.insert("pkg-1.0.0.tar.gz".to_string(), artifact_data);
+
+        let mut metadata = AHashMap::new();
+        metadata.insert(
+            "1.0.0".to_string(),
+            VersionMetadata {
+                name: PackageName::new("pkg"),
+                version: "1.0.0".to_string(),
+                artifacts: vec![ArtifactDigest {
+                    filename: "pkg-1.0.0.tar.gz".to_string(),
+                    blake3: String::new(),
+                    size: 0,
+                    upstream_hashes: AHashMap::new(),
+                }],
+                license: None,
+                yanked: false,
+            },
+        );
+
+        let upstream = MockUpstream {
+            eco: Ecosystem::PyPI,
+            versions: vec![],
+            metadata,
+            artifacts,
+        };
+        let policy = PolicyConfig {
+            block_unlicensed: true,
+            ..Default::default()
+        };
+        let service = build_service(storage, upstream, policy);
+        let artifact_id = ArtifactId {
+            ecosystem: Ecosystem::PyPI,
+            name: PackageName::new("pkg"),
+            version: "1.0.0".to_string(),
+            filename: "pkg-1.0.0.tar.gz".to_string(),
+        };
+
+        let result = service.get_artifact(&artifact_id).await;
+        assert!(result.is_err(), "license policy should block artifact");
+        assert!(result.unwrap_err().to_string().contains("has no license"));
     }
 }

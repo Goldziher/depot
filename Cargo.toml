@@ -7,7 +7,9 @@ members = [
     "crates/depot-server",
     "crates/depot-service",
     "crates/depot-storage",
+    "tests/conformance",
     "tests/integration",
+    "tools/schema-manager",
     "tools/test-generator",
 ]
 
@@ -27,6 +29,9 @@ async-trait = "0.1"
 # Web framework & middleware
 axum = "0.8"
 
+# Encoding / digests
+base64 = "0.22"
+
 # Integrity
 blake3 = "1"
 
@@ -38,13 +43,13 @@ chrono = { version = "0.4", features = ["serde"] }
 
 # CLI
 clap = { version = "4", features = ["derive"] }
-depot-adapters = { path = "crates/depot-adapters" }
+depot-adapters = { path = "crates/depot-adapters", default-features = false }
 
 # Workspace crates
 depot-core = { path = "crates/depot-core" }
-depot-server = { path = "crates/depot-server" }
+depot-server = { path = "crates/depot-server", default-features = false }
 depot-service = { path = "crates/depot-service" }
-depot-storage = { path = "crates/depot-storage" }
+depot-storage = { path = "crates/depot-storage", default-features = false }
 
 # JSON schema validation
 jsonschema = "0.46"
@@ -68,6 +73,8 @@ schemars = "1.2"
 # Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sha1 = "0.10"
+sha2 = "0.10"
 
 # Testing
 tempfile = "3"

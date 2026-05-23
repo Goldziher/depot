@@ -1,0 +1,61 @@
+{
+  "$defs": {
+    "NugetServiceResource": {
+      "description": "A resource advertised by the NuGet V3 service index.",
+      "properties": {
+        "@id": {
+          "type": "string"
+        },
+        "@type": {
+          "type": "string"
+        },
+        "comment": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "@id",
+        "@type"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.depot.local/registries/nuget-service-index.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-derived JSON Schema for the NuGet V3 service index response.",
+  "properties": {
+    "resources": {
+      "items": {
+        "$ref": "#/$defs/NugetServiceResource"
+      },
+      "type": "array"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "version",
+    "resources"
+  ],
+  "title": "NuGet V3 Service Index",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-derived-json-schema",
+    "source_file": "crates/depot-core/src/registry/nuget.rs",
+    "source_ids": [
+      "nuget-v3-overview",
+      "nuget-v3-service-index"
+    ],
+    "source_kinds": [
+      "official-prose"
+    ],
+    "source_type": "depot_core::registry::nuget::NugetServiceIndex",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs"
+  }
+}

@@ -18,7 +18,10 @@ All artifacts stored in depot are hashed with [BLAKE3](https://github.com/BLAKE3
 - Cryptographically secure
 - Consistent across ecosystems (we compute our own hash regardless of what upstream uses)
 
-Upstream-provided hashes (SHA-256, etc.) are verified on fetch, then depot's blake3 hash becomes the canonical integrity check.
+Upstream-provided hashes are verified on fetch when depot has a supported digest
+in metadata (PyPI/Cargo `sha256`, npm SRI `integrity`, or npm `sha1`
+`shasum`). Depot's blake3 hash then becomes the canonical cache integrity
+check.
 
 ### Current Implementation
 
@@ -26,6 +29,7 @@ Blake3 integrity is implemented in `CachingPackageService` (`depot-service`):
 
 - On first artifact fetch, the blake3 hash is computed and stored as a `.blake3` sidecar file alongside the artifact in storage (e.g., `pypi/requests/2.31.0/requests-2.31.0.tar.gz.blake3`).
 - On every subsequent cache read, the sidecar hash is loaded and verified against the artifact data.
+- Cached artifacts without a `.blake3` sidecar fail closed instead of being served unverified.
 - Upstream-provided hashes are preserved in `ArtifactDigest.upstream_hashes` for ecosystems that provide them.
 
 ### Depot lock file

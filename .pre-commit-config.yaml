@@ -1,7 +1,7 @@
 default_install_hook_types:
   - pre-commit
   - commit-msg
-exclude: vendor/|target/
+exclude: vendor/|target/|schemas/upstream/
 
 repos:
   # AI-Rulez: auto-generate AI assistant configuration files

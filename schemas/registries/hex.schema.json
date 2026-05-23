@@ -1,48 +1,178 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title": "Hex.pm Package",
-	"description": "Package metadata from Hex.pm HTTP API",
-	"type": "object",
-	"required": ["name", "releases"],
-	"properties": {
-		"name": { "type": "string" },
-		"url": { "type": "string", "format": "uri" },
-		"html_url": { "type": "string", "format": "uri" },
-		"docs_html_url": { "type": ["string", "null"], "format": "uri" },
-		"meta": {
-			"type": "object",
-			"properties": {
-				"description": { "type": "string" },
-				"licenses": { "type": "array", "items": { "type": "string" } },
-				"links": {
-					"type": "object",
-					"additionalProperties": { "type": "string" }
-				},
-				"maintainers": { "type": "array", "items": { "type": "string" } }
-			}
-		},
-		"releases": {
-			"type": "array",
-			"items": {
-				"type": "object",
-				"required": ["version", "url"],
-				"properties": {
-					"version": { "type": "string" },
-					"url": { "type": "string", "format": "uri" },
-					"has_docs": { "type": "boolean" },
-					"inserted_at": { "type": "string", "format": "date-time" },
-					"updated_at": { "type": "string", "format": "date-time" },
-					"retirement": {
-						"type": ["object", "null"],
-						"properties": {
-							"reason": { "type": "string" },
-							"message": { "type": ["string", "null"] }
-						}
-					}
-				}
-			}
-		},
-		"inserted_at": { "type": "string", "format": "date-time" },
-		"updated_at": { "type": "string", "format": "date-time" }
-	}
+  "$defs": {
+    "HexMeta": {
+      "properties": {
+        "description": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "licenses": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "links": {
+          "default": null
+        },
+        "maintainers": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "HexRelease": {
+      "description": "A single release in a Hex package.",
+      "properties": {
+        "has_docs": {
+          "default": false,
+          "type": "boolean"
+        },
+        "inserted_at": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "retirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HexRetirement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "updated_at": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "url"
+      ],
+      "type": "object"
+    },
+    "HexRetirement": {
+      "properties": {
+        "message": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.depot.local/registries/hex.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-derived JSON Schema for the Hex package HTTP API response; official registry resources use protobuf.",
+  "properties": {
+    "docs_html_url": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "html_url": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "inserted_at": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "meta": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HexMeta"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "name": {
+      "type": "string"
+    },
+    "releases": {
+      "items": {
+        "$ref": "#/$defs/HexRelease"
+      },
+      "type": "array"
+    },
+    "updated_at": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "url": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "name",
+    "releases"
+  ],
+  "title": "Hex Package HTTP API",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-derived-json-schema",
+    "source_file": "crates/depot-core/src/registry/hex.rs",
+    "source_ids": [
+      "hex-registry-v2",
+      "hex-package-proto",
+      "hex-package-metadata"
+    ],
+    "source_kinds": [
+      "official-prose",
+      "official-protobuf"
+    ],
+    "source_type": "depot_core::registry::hex::HexPackage",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance"
+  }
 }

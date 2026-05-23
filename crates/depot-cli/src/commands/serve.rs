@@ -12,12 +12,22 @@ use depot_storage::OpenDalStorage;
 pub fn run(config: Config) {
     let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
     rt.block_on(async {
+        config.validate_mvp().unwrap_or_else(|e| {
+            eprintln!("error: {e}");
+            std::process::exit(1);
+        });
+
         let storage = build_storage(&config);
         let mut clients: AHashMap<Ecosystem, Arc<dyn UpstreamClient>> = AHashMap::new();
 
-        #[cfg(feature = "full")]
-        let (pypi_upstream, cargo_upstream, npm_upstream, hex_upstream) =
-            register_upstream_clients(&config, &mut clients);
+        #[cfg(feature = "pypi")]
+        let pypi_upstream = register_pypi_upstream(&config, &mut clients);
+        #[cfg(feature = "cargo-registry")]
+        let cargo_upstream = register_cargo_upstream(&config, &mut clients);
+        #[cfg(feature = "npm")]
+        let npm_upstream = register_npm_upstream(&config, &mut clients);
+        #[cfg(feature = "hex")]
+        let hex_upstream = register_hex_upstream(&config, &mut clients);
 
         let service =
             CachingPackageService::new(Arc::new(storage), clients, config.policies.clone());
@@ -25,13 +35,13 @@ pub fn run(config: Config) {
         let state = AppState::new(
             config.clone(),
             Arc::new(service),
-            #[cfg(feature = "full")]
+            #[cfg(feature = "pypi")]
             pypi_upstream,
-            #[cfg(feature = "full")]
+            #[cfg(feature = "cargo-registry")]
             cargo_upstream,
-            #[cfg(feature = "full")]
+            #[cfg(feature = "npm")]
             npm_upstream,
-            #[cfg(feature = "full")]
+            #[cfg(feature = "hex")]
             hex_upstream,
         );
         let app = build_app(state);
@@ -49,43 +59,18 @@ pub fn run(config: Config) {
 }
 
 fn build_storage(config: &Config) -> OpenDalStorage {
-    match config.storage.backend.as_str() {
-        #[cfg(feature = "backend-fs")]
-        "fs" => {
-            let path = config
-                .storage
-                .path
-                .as_deref()
-                .unwrap_or_else(|| std::path::Path::new("./depot-data"));
-            OpenDalStorage::filesystem(path).unwrap_or_else(|e| {
-                eprintln!("error: failed to create fs storage: {e}");
-                std::process::exit(1);
-            })
-        }
-        #[cfg(feature = "backend-memory")]
-        "memory" => OpenDalStorage::memory().unwrap_or_else(|e| {
-            eprintln!("error: failed to create memory storage: {e}");
-            std::process::exit(1);
-        }),
-        other => {
-            eprintln!("error: unsupported storage backend: {other}");
-            eprintln!("supported backends: fs, memory (s3 and gcs require feature flags)");
-            std::process::exit(1);
-        }
-    }
+    OpenDalStorage::from_config(&config.storage).unwrap_or_else(|e| {
+        eprintln!("error: {e}");
+        std::process::exit(1);
+    })
 }
 
-#[cfg(feature = "full")]
-fn register_upstream_clients(
+#[cfg(feature = "pypi")]
+fn register_pypi_upstream(
     config: &Config,
     clients: &mut AHashMap<Ecosystem, Arc<dyn UpstreamClient>>,
-) -> (
-    Arc<depot_adapters::pypi::upstream::PypiUpstreamClient>,
-    Arc<depot_adapters::cargo::upstream::CargoUpstreamClient>,
-    Arc<depot_adapters::npm::upstream::NpmUpstreamClient>,
-    Arc<depot_adapters::hex::upstream::HexUpstreamClient>,
-) {
-    let pypi_upstream = if let Some(pypi_config) = config.upstream.get("pypi")
+) -> Arc<depot_adapters::pypi::upstream::PypiUpstreamClient> {
+    if let Some(pypi_config) = config.upstream.get("pypi")
         && pypi_config.enabled
     {
         let client = Arc::new(depot_adapters::pypi::upstream::PypiUpstreamClient::new(
@@ -98,9 +83,15 @@ fn register_upstream_clients(
         Arc::new(depot_adapters::pypi::upstream::PypiUpstreamClient::new(
             "https://pypi.org".to_string(),
         ))
-    };
+    }
+}
 
-    let npm_upstream = if let Some(npm_config) = config.upstream.get("npm")
+#[cfg(feature = "npm")]
+fn register_npm_upstream(
+    config: &Config,
+    clients: &mut AHashMap<Ecosystem, Arc<dyn UpstreamClient>>,
+) -> Arc<depot_adapters::npm::upstream::NpmUpstreamClient> {
+    if let Some(npm_config) = config.upstream.get("npm")
         && npm_config.enabled
     {
         let client = Arc::new(depot_adapters::npm::upstream::NpmUpstreamClient::new(
@@ -113,9 +104,15 @@ fn register_upstream_clients(
         Arc::new(depot_adapters::npm::upstream::NpmUpstreamClient::new(
             "https://registry.npmjs.org".to_string(),
         ))
-    };
+    }
+}
 
-    let cargo_upstream = if let Some(cargo_config) = config.upstream.get("cargo")
+#[cfg(feature = "cargo-registry")]
+fn register_cargo_upstream(
+    config: &Config,
+    clients: &mut AHashMap<Ecosystem, Arc<dyn UpstreamClient>>,
+) -> Arc<depot_adapters::cargo::upstream::CargoUpstreamClient> {
+    if let Some(cargo_config) = config.upstream.get("cargo")
         && cargo_config.enabled
     {
         let client = Arc::new(depot_adapters::cargo::upstream::CargoUpstreamClient::new(
@@ -130,9 +127,15 @@ fn register_upstream_clients(
             "https://index.crates.io".to_string(),
             "https://static.crates.io/crates".to_string(),
         ))
-    };
+    }
+}
 
-    let hex_upstream = if let Some(hex_config) = config.upstream.get("hex")
+#[cfg(feature = "hex")]
+fn register_hex_upstream(
+    config: &Config,
+    clients: &mut AHashMap<Ecosystem, Arc<dyn UpstreamClient>>,
+) -> Arc<depot_adapters::hex::upstream::HexUpstreamClient> {
+    if let Some(hex_config) = config.upstream.get("hex")
         && hex_config.enabled
     {
         let client = Arc::new(depot_adapters::hex::upstream::HexUpstreamClient::new(
@@ -147,7 +150,5 @@ fn register_upstream_clients(
             "https://hex.pm".to_string(),
             "https://repo.hex.pm".to_string(),
         ))
-    };
-
-    (pypi_upstream, cargo_upstream, npm_upstream, hex_upstream)
+    }
 }

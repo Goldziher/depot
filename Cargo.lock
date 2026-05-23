@@ -666,6 +666,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "depot-conformance-tests"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "bytes",
+ "depot-adapters",
+ "depot-core",
+ "roxmltree",
+ "serde_json",
+ "tokio",
+ "tower",
+]
+
+[[package]]
 name = "depot-core"
 version = "0.1.0"
 dependencies = [
@@ -702,6 +717,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "depot-schema-manager"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "clap",
+ "depot-core",
+ "reqwest 0.13.2",
+ "schemars",
+ "serde",
+ "serde_json",
+ "tokio",
+ "toml",
+]
+
+[[package]]
 name = "depot-server"
 version = "0.1.0"
 dependencies = [
@@ -721,10 +751,13 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "async-trait",
+ "base64",
  "bytes",
  "depot-core",
  "serde",
  "serde_json",
+ "sha1",
+ "sha2",
  "tokio",
  "tracing",
 ]
@@ -737,6 +770,7 @@ dependencies = [
  "bytes",
  "depot-core",
  "opendal",
+ "tempfile",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -2418,6 +2452,15 @@ dependencies = [
  "libc",
  "untrusted",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "roxmltree"
+version = "0.21.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1964b10c76125c36f8afe190065a4bf9a87bf324842c05701330bba9f1cacbb"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]

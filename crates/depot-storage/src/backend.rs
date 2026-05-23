@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use opendal::Operator;
 
+use depot_core::config::StorageConfig;
 use depot_core::error::DepotError;
 use depot_core::error::Result;
 use depot_core::ports::StoragePort;
@@ -14,6 +15,24 @@ pub struct OpenDalStorage {
 impl OpenDalStorage {
     pub fn new(operator: Operator) -> Self {
         Self { operator }
+    }
+
+    pub fn from_config(config: &StorageConfig) -> Result<Self> {
+        let mut options = config.opendal_options();
+        if config.backend == "fs" {
+            options
+                .entry("root".to_string())
+                .or_insert_with(|| "./depot-data".to_string());
+        }
+
+        Operator::via_iter(&config.backend, options)
+            .map(Self::new)
+            .map_err(|err| {
+                DepotError::Storage(format!(
+                    "failed to initialize OpenDAL backend '{}': {err}",
+                    config.backend
+                ))
+            })
     }
 
     /// Create a filesystem-backed storage rooted at the given path.

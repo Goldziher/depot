@@ -10,30 +10,25 @@ ignored = ["depot-adapters", "depot-storage", "serde"]
 
 [features]
 default = ["full"]
-full = [
-    "depot-adapters/pypi",
-    "depot-adapters/npm",
-    "depot-adapters/cargo-registry",
-    "depot-adapters/hex",
-    "depot-server/pypi",
-    "depot-server/npm",
-    "depot-server/cargo-registry",
-    "depot-server/hex",
-    "backend-fs",
-    "backend-memory",
-]
+full = ["pypi", "npm", "cargo-registry", "hex", "backend-fs"]
+pypi = ["depot-adapters/pypi", "depot-server/pypi"]
+npm = ["depot-adapters/npm", "depot-server/npm"]
+cargo-registry = ["depot-adapters/cargo-registry", "depot-server/cargo-registry"]
+hex = ["depot-adapters/hex", "depot-server/hex"]
 backend-fs = ["depot-storage/backend-fs"]
 backend-memory = ["depot-storage/backend-memory"]
+backend-s3 = ["depot-storage/backend-s3"]
+backend-gcs = ["depot-storage/backend-gcs"]
 
 [dependencies]
 ahash.workspace = true
 axum.workspace = true
 clap.workspace = true
-depot-adapters.workspace = true
+depot-adapters = { workspace = true, default-features = false }
 depot-core.workspace = true
-depot-server.workspace = true
+depot-server = { workspace = true, default-features = false }
 depot-service.workspace = true
-depot-storage.workspace = true
+depot-storage = { workspace = true, default-features = false }
 serde.workspace = true
 tokio.workspace = true
 toml.workspace = true

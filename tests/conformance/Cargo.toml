@@ -1,0 +1,23 @@
+[package]
+name = "depot-conformance-tests"
+description = "Fixture-based registry conformance tests for depot"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+async-trait.workspace = true
+axum.workspace = true
+bytes.workspace = true
+depot-adapters = { path = "../../crates/depot-adapters", default-features = false, features = [
+    "cargo-registry",
+    "hex",
+    "npm",
+    "pypi",
+] }
+depot-core.workspace = true
+roxmltree = "0.21"
+serde_json.workspace = true
+tokio.workspace = true
+tower.workspace = true

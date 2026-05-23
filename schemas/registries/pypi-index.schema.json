@@ -1,0 +1,62 @@
+{
+  "$defs": {
+    "PypiIndexProject": {
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "PypiMeta": {
+      "properties": {
+        "api-version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "api-version"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.depot.local/registries/pypi-index.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-derived JSON Schema for a PEP 691 Simple API project index response.",
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/PypiMeta"
+    },
+    "projects": {
+      "items": {
+        "$ref": "#/$defs/PypiIndexProject"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "meta",
+    "projects"
+  ],
+  "title": "PyPI Simple Repository API Project Index",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-derived-json-schema",
+    "source_file": "crates/depot-core/src/registry/pypi.rs",
+    "source_ids": [
+      "pypa-specifications-index",
+      "pypi-simple-api",
+      "pypi-name-normalization"
+    ],
+    "source_kinds": [
+      "official-prose-index",
+      "official-prose"
+    ],
+    "source_type": "depot_core::registry::pypi::PypiIndex",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance"
+  }
+}

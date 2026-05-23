@@ -33,6 +33,8 @@ We use Cargo feature flags to control which components are compiled:
 ### `depot-cli`
 
 - `full` (default) — all adapters + `backend-fs`
+- `pypi`, `npm`, `cargo-registry`, `hex` — pass-through adapter features
+- `backend-fs`, `backend-s3`, `backend-gcs`, `backend-memory` — pass-through storage features
 
 A minimal build (e.g. PyPI-only with S3) would use:
 

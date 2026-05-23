@@ -1,53 +1,123 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title": "Depot Lock File",
-	"description": "Schema for depot-lock.toml",
-	"type": "object",
-	"required": ["metadata"],
-	"properties": {
-		"metadata": {
-			"type": "object",
-			"required": ["schema_version", "generated_at", "depot_version"],
-			"properties": {
-				"schema_version": { "type": "integer", "minimum": 1 },
-				"generated_at": { "type": "string", "format": "date-time" },
-				"depot_version": { "type": "string" }
-			}
-		},
-		"packages": {
-			"type": "array",
-			"items": {
-				"type": "object",
-				"required": [
-					"ecosystem",
-					"name",
-					"version",
-					"artifacts",
-					"resolved_from"
-				],
-				"properties": {
-					"ecosystem": {
-						"type": "string",
-						"enum": ["pypi", "npm", "cargo", "hex"]
-					},
-					"name": { "type": "string" },
-					"version": { "type": "string" },
-					"artifacts": {
-						"type": "array",
-						"items": {
-							"type": "object",
-							"required": ["filename", "blake3", "size"],
-							"properties": {
-								"filename": { "type": "string" },
-								"blake3": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-								"size": { "type": "integer", "minimum": 0 }
-							}
-						}
-					},
-					"resolved_from": { "type": "string" },
-					"pinned": { "type": "boolean", "default": false }
-				}
-			}
-		}
-	}
+  "$defs": {
+    "Ecosystem": {
+      "description": "Supported package ecosystems.",
+      "enum": [
+        "pypi",
+        "npm",
+        "cargo",
+        "hex"
+      ],
+      "type": "string"
+    },
+    "LockMetadata": {
+      "properties": {
+        "depot_version": {
+          "type": "string"
+        },
+        "generated_at": {
+          "type": "string"
+        },
+        "schema_version": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "generated_at",
+        "depot_version"
+      ],
+      "type": "object"
+    },
+    "LockedArtifact": {
+      "properties": {
+        "blake3": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "size": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "filename",
+        "blake3",
+        "size"
+      ],
+      "type": "object"
+    },
+    "LockedPackage": {
+      "properties": {
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/LockedArtifact"
+          },
+          "type": "array"
+        },
+        "ecosystem": {
+          "$ref": "#/$defs/Ecosystem"
+        },
+        "name": {
+          "type": "string"
+        },
+        "pinned": {
+          "default": false,
+          "type": "boolean"
+        },
+        "resolved_from": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ecosystem",
+        "name",
+        "version",
+        "artifacts",
+        "resolved_from"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.depot.local/depot/lockfile.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-owned JSON Schema for depot-lock.toml.",
+  "properties": {
+    "metadata": {
+      "$ref": "#/$defs/LockMetadata"
+    },
+    "packages": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/LockedPackage"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "metadata"
+  ],
+  "title": "Depot Lock File",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-owned-json-schema",
+    "source_file": "crates/depot-core/src/lockfile.rs",
+    "source_ids": [
+      "depot-lockfile"
+    ],
+    "source_kinds": [
+      "depot-rust-type"
+    ],
+    "source_type": "depot_core::lockfile::LockFile",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs"
+  }
 }

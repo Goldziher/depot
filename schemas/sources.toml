@@ -1,0 +1,382 @@
+[[source]]
+id = "pypa-specifications-index"
+registry = "pypi"
+kind = "official-prose-index"
+url = "https://packaging.python.org/en/latest/specifications/"
+official = true
+fetched = false
+description = "PyPA canonical index of Python packaging interoperability specifications."
+
+[[source]]
+id = "pypi-simple-api"
+registry = "pypi"
+kind = "official-prose"
+url = "https://packaging.python.org/en/latest/specifications/simple-repository-api/"
+official = true
+fetched = false
+description = "PyPA living specification for the Simple Repository API, including JSON responses."
+
+[[source]]
+id = "pypi-core-metadata"
+registry = "pypi"
+kind = "official-prose"
+url = "https://packaging.python.org/en/latest/specifications/core-metadata/"
+official = true
+fetched = false
+description = "PyPA Core Metadata specification for Python distribution metadata fields."
+
+[[source]]
+id = "pypi-name-normalization"
+registry = "pypi"
+kind = "official-prose"
+url = "https://packaging.python.org/en/latest/specifications/name-normalization/"
+official = true
+fetched = false
+description = "PyPA package name normalization specification used by PyPI-compatible indexes."
+
+[[source]]
+id = "pypi-binary-distribution-format"
+registry = "pypi"
+kind = "official-prose"
+url = "https://packaging.python.org/en/latest/specifications/binary-distribution-format/"
+official = true
+fetched = false
+description = "PyPA wheel binary distribution format specification used for PyPI filename interpretation."
+
+[[source]]
+id = "pypi-source-distribution-format"
+registry = "pypi"
+kind = "official-prose"
+url = "https://packaging.python.org/en/latest/specifications/source-distribution-format/"
+official = true
+fetched = false
+description = "PyPA source distribution format specification used for PyPI source archive interpretation."
+
+[[source]]
+id = "pypi-json-api"
+registry = "pypi"
+kind = "official-prose"
+url = "https://docs.pypi.org/api/json/"
+official = true
+fetched = false
+description = "PyPI-specific JSON API documentation, used only for compatibility context."
+
+[[source]]
+id = "pypa-schema-index"
+registry = "pypi"
+kind = "official-schema-index"
+url = "https://packaging.python.org/en/latest/specifications/schemas/"
+official = true
+fetched = false
+description = "PyPA schema index; it does not currently include PyPI registry metadata schemas."
+
+[[source]]
+id = "npm-package-metadata"
+registry = "npm"
+kind = "official-prose"
+url = "https://github.com/npm/registry/blob/main/docs/responses/package-metadata.md"
+official = true
+fetched = false
+description = "npm registry package metadata documentation for full and abbreviated packuments."
+
+[[source]]
+id = "npm-types"
+registry = "npm"
+kind = "official-typescript"
+url = "https://raw.githubusercontent.com/npm/types/main/types/index.d.ts"
+official = true
+fetched = true
+path = "upstream/npm/types/index.d.ts"
+description = "npm-maintained TypeScript definitions for registry content; used as machine-readable reference, not authoritative JSON Schema."
+
+[[source]]
+id = "cargo-registry-index"
+registry = "cargo"
+kind = "official-prose"
+url = "https://doc.rust-lang.org/cargo/reference/registry-index.html"
+official = true
+fetched = false
+description = "Cargo Book registry index specification for sparse index config and JSONL package entries."
+
+[[source]]
+id = "hex-registry-v2"
+registry = "hex"
+kind = "official-prose"
+url = "https://github.com/hexpm/specifications/blob/main/registry-v2.md"
+official = true
+fetched = false
+description = "Hex Registry v2 protocol documentation."
+
+[[source]]
+id = "hex-package-proto"
+registry = "hex"
+kind = "official-protobuf"
+url = "https://raw.githubusercontent.com/hexpm/specifications/main/registry/package.proto"
+official = true
+fetched = true
+path = "upstream/hex/registry/package.proto"
+description = "Official Hex protobuf definition for package registry resources."
+
+[[source]]
+id = "hex-names-proto"
+registry = "hex"
+kind = "official-protobuf"
+url = "https://raw.githubusercontent.com/hexpm/specifications/main/registry/names.proto"
+official = true
+fetched = true
+path = "upstream/hex/registry/names.proto"
+description = "Official Hex protobuf definition for registry names resources."
+
+[[source]]
+id = "hex-versions-proto"
+registry = "hex"
+kind = "official-protobuf"
+url = "https://raw.githubusercontent.com/hexpm/specifications/main/registry/versions.proto"
+official = true
+fetched = true
+path = "upstream/hex/registry/versions.proto"
+description = "Official Hex protobuf definition for registry versions resources."
+
+[[source]]
+id = "hex-signed-proto"
+registry = "hex"
+kind = "official-protobuf"
+url = "https://raw.githubusercontent.com/hexpm/specifications/main/registry/signed.proto"
+official = true
+fetched = true
+path = "upstream/hex/registry/signed.proto"
+description = "Official Hex protobuf definition for signed registry payloads."
+
+[[source]]
+id = "hex-package-metadata"
+registry = "hex"
+kind = "official-prose"
+url = "https://github.com/hexpm/specifications/blob/main/package_metadata.md"
+official = true
+fetched = false
+description = "Hex package tarball metadata.config documentation."
+
+[[source]]
+id = "maven-pom-xsd"
+registry = "maven"
+kind = "official-xml-schema"
+url = "https://maven.apache.org/xsd/maven-4.0.0.xsd"
+official = true
+fetched = true
+path = "upstream/maven/maven-4.0.0.xsd"
+description = "Official Maven POM 4.0.0 XML Schema."
+
+[[source]]
+id = "maven-repository-metadata-xsd"
+registry = "maven"
+kind = "official-xml-schema"
+url = "https://maven.apache.org/xsd/repository-metadata-1.1.0.xsd"
+official = true
+fetched = true
+path = "upstream/maven/repository-metadata-1.1.0.xsd"
+description = "Official Maven repository metadata XML Schema."
+
+[[source]]
+id = "sonatype-central-publisher-openapi"
+registry = "sonatype"
+kind = "official-openapi"
+url = "https://central.sonatype.com/swagger.json"
+official = true
+fetched = true
+path = "upstream/sonatype/central-publisher-openapi.json"
+description = "Official Central Publisher API OpenAPI document; not used for Maven artifact serving."
+
+[[source]]
+id = "sonatype-nexus-rest-swagger"
+registry = "sonatype"
+kind = "official-openapi"
+url = "https://sonatype.github.io/sonatype-documentation/api/nexus-repository/latest/nexus-repository-api.json"
+official = true
+fetched = true
+path = "upstream/sonatype/nexus-repository-api.json"
+description = "Official published copy of Nexus Repository REST API Swagger; not used for Maven artifact serving."
+
+[[source]]
+id = "rubygems-compact-index-api"
+registry = "rubygems"
+kind = "official-prose"
+url = "https://guides.rubygems.org/rubygems-org-compact-index-api/"
+official = true
+fetched = false
+description = "Official RubyGems.org Compact Index API documentation for /versions, /info/:gem, and /names text formats."
+
+[[source]]
+id = "rubygems-bundler-compact-index-parser"
+registry = "rubygems"
+kind = "official-ruby-source"
+url = "https://raw.githubusercontent.com/ruby/rubygems/master/bundler/lib/bundler/compact_index_client/parser.rb"
+official = true
+fetched = true
+path = "upstream/rubygems/bundler/compact_index_client/parser.rb"
+description = "Bundler compact index parser; machine-readable reference for client interpretation of compact index text."
+
+[[source]]
+id = "rubygems-api-v1"
+registry = "rubygems"
+kind = "official-prose"
+url = "https://guides.rubygems.org/rubygems-org-api/"
+official = true
+fetched = false
+description = "RubyGems.org API v1 prose documentation and example JSON/YAML responses; no official JSON Schema or OpenAPI found."
+
+[[source]]
+id = "rubygems-api-v2"
+registry = "rubygems"
+kind = "official-prose"
+url = "https://guides.rubygems.org/rubygems-org-api-v2/"
+official = true
+fetched = false
+description = "RubyGems.org API v2 prose documentation and example JSON/YAML responses; no official JSON Schema or OpenAPI found."
+
+[[source]]
+id = "rubygems-dependency-api-deprecation"
+registry = "rubygems"
+kind = "official-prose"
+url = "https://blog.rubygems.org/2023/02/22/dependency-api-deprecation.html"
+official = true
+fetched = false
+description = "Official notice that the legacy Dependency API was deprecated and disabled; Depot should not model it as an active primary protocol."
+
+[[source]]
+id = "rubygems-gem-validator-schema"
+registry = "rubygems"
+kind = "official-ruby-schema"
+url = "https://raw.githubusercontent.com/rubygems/rubygems.org/master/lib/gem_validator/schema.rb"
+official = true
+fetched = true
+path = "upstream/rubygems/gem_validator/schema.rb"
+description = "RubyGems.org schema-like Ruby hash for validating most gemspec metadata and checksums; not standards-compliant JSON Schema."
+
+[[source]]
+id = "rubygems-gem-specification-reference"
+registry = "rubygems"
+kind = "official-prose"
+url = "https://guides.rubygems.org/specification-reference/"
+official = true
+fetched = false
+description = "Official Gem::Specification attribute documentation used to interpret gem metadata fields."
+
+[[source]]
+id = "nuget-v3-overview"
+registry = "nuget"
+kind = "official-prose"
+url = "https://learn.microsoft.com/en-us/nuget/api/overview"
+official = true
+fetched = false
+description = "Microsoft Learn NuGet Server API overview for V3 registry resources."
+
+[[source]]
+id = "nuget-v3-service-index"
+registry = "nuget"
+kind = "official-prose"
+url = "https://learn.microsoft.com/en-us/nuget/api/service-index"
+official = true
+fetched = false
+description = "Microsoft Learn NuGet V3 service index resource documentation."
+
+[[source]]
+id = "nuget-v3-package-base-address"
+registry = "nuget"
+kind = "official-prose"
+url = "https://learn.microsoft.com/en-us/nuget/api/package-base-address-resource"
+official = true
+fetched = false
+description = "Microsoft Learn NuGet PackageBaseAddress resource documentation for version lists, nupkg downloads, and nuspec downloads."
+
+[[source]]
+id = "nuget-v3-registration"
+registry = "nuget"
+kind = "official-prose"
+url = "https://learn.microsoft.com/en-us/nuget/api/registration-base-url-resource"
+official = true
+fetched = false
+description = "Microsoft Learn NuGet registration metadata resource documentation."
+
+[[source]]
+id = "nuget-v3-search"
+registry = "nuget"
+kind = "official-prose"
+url = "https://learn.microsoft.com/en-us/nuget/api/search-query-service-resource"
+official = true
+fetched = false
+description = "Microsoft Learn NuGet search query service resource documentation."
+
+[[source]]
+id = "nuget-v3-catalog"
+registry = "nuget"
+kind = "official-prose"
+url = "https://learn.microsoft.com/en-us/nuget/api/catalog-resource"
+official = true
+fetched = false
+description = "Microsoft Learn NuGet catalog resource documentation; useful for compatibility evidence, not required for restore MVP."
+
+[[source]]
+id = "nuget-nuspec-xsd"
+registry = "nuget"
+kind = "official-xml-schema"
+url = "https://raw.githubusercontent.com/NuGet/NuGet.Client/dev/src/NuGet.Core/NuGet.Packaging/compiler/resources/nuspec.xsd"
+official = true
+fetched = true
+path = "upstream/nuget/nuspec.xsd"
+description = "NuGet.Client NuSpec XML Schema for .nuspec package metadata."
+
+[[source]]
+id = "pub-hosted-repository-v2"
+registry = "pub"
+kind = "official-prose"
+url = "https://github.com/dart-lang/pub/blob/master/doc/repository-spec-v2.md"
+official = true
+fetched = false
+description = "Official Hosted Pub Repository Specification v2 for package metadata, archive download, publish, and advisories endpoints."
+
+[[source]]
+id = "pub-dev-supported-api"
+registry = "pub"
+kind = "official-prose"
+url = "https://github.com/dart-lang/pub-dev/blob/master/doc/help-api.md"
+official = true
+fetched = false
+description = "Officially supported pub.dev developer API documentation; references Hosted Pub Repository Specification v2 for pub client APIs."
+
+[[source]]
+id = "pub-dev-package-api-dtos"
+registry = "pub"
+kind = "official-dart-source"
+url = "https://raw.githubusercontent.com/dart-lang/pub-dev/master/pkg/_pub_shared/lib/data/package_api.dart"
+official = true
+fetched = true
+path = "upstream/pub/pub-dev/package_api.dart"
+description = "pub.dev JsonSerializable DTO source for package/version/upload response shapes; supporting implementation evidence, not an official schema."
+
+[[source]]
+id = "osv-schema"
+registry = "pub"
+kind = "official-json-schema"
+url = "https://raw.githubusercontent.com/ossf/osv-schema/main/validation/schema.json"
+official = true
+fetched = true
+path = "upstream/osv/schema.json"
+description = "OSV JSON Schema referenced by Hosted Pub Repository Specification v2 for package security advisories only."
+
+[[source]]
+id = "depot-config"
+registry = "depot"
+kind = "depot-rust-type"
+url = "crates/depot-core/src/config.rs"
+official = false
+fetched = false
+description = "Depot-owned configuration Rust type."
+
+[[source]]
+id = "depot-lockfile"
+registry = "depot"
+kind = "depot-rust-type"
+url = "crates/depot-core/src/lockfile.rs"
+official = false
+fetched = false
+description = "Depot-owned lockfile Rust type."

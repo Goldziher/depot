@@ -108,6 +108,21 @@ fn should_validate_cargo_sample_against_schema() {
 }
 
 #[test]
+fn should_validate_cargo_config_sample_against_schema() {
+    let schema = load_schema("schemas/registries/cargo-config.schema.json");
+    let sample: Value = serde_json::from_str(
+        r#"{
+            "dl": "https://static.crates.io/crates/{crate}/{version}/download",
+            "api": "https://crates.io",
+            "auth-required": false
+        }"#,
+    )
+    .unwrap();
+
+    validate(&schema, &sample).expect("Cargo config sample should validate against schema");
+}
+
+#[test]
 fn should_reject_cargo_sample_missing_cksum() {
     let schema = load_schema("schemas/registries/cargo.schema.json");
     let invalid: Value = serde_json::from_str(
@@ -145,6 +160,125 @@ fn should_validate_hex_sample_against_schema() {
     .unwrap();
 
     validate(&schema, &sample).expect("Hex sample should validate against schema");
+}
+
+#[test]
+fn should_validate_pypi_index_sample_against_schema() {
+    let schema = load_schema("schemas/registries/pypi-index.schema.json");
+    let sample: Value = serde_json::from_str(
+        r#"{
+            "meta": { "api-version": "1.0" },
+            "projects": [{ "name": "requests" }, { "name": "urllib3" }]
+        }"#,
+    )
+    .unwrap();
+
+    validate(&schema, &sample).expect("PyPI index sample should validate against schema");
+}
+
+#[test]
+fn should_validate_nuget_service_index_sample_against_schema() {
+    let schema = load_schema("schemas/registries/nuget-service-index.schema.json");
+    let sample: Value = serde_json::from_str(
+        r#"{
+            "version": "3.0.0",
+            "resources": [
+                {
+                    "@id": "https://api.nuget.org/v3-flatcontainer/",
+                    "@type": "PackageBaseAddress/3.0.0",
+                    "comment": "Base URL of where NuGet packages are stored"
+                }
+            ]
+        }"#,
+    )
+    .unwrap();
+
+    validate(&schema, &sample).expect("NuGet service index sample should validate against schema");
+}
+
+#[test]
+fn should_validate_nuget_package_base_sample_against_schema() {
+    let schema = load_schema("schemas/registries/nuget-package-base-address.schema.json");
+    let sample: Value = serde_json::from_str(
+        r#"{
+            "versions": ["1.0.0", "1.1.0", "2.0.0"]
+        }"#,
+    )
+    .unwrap();
+
+    validate(&schema, &sample).expect("NuGet package base sample should validate against schema");
+}
+
+#[test]
+fn should_validate_nuget_registration_sample_against_schema() {
+    let schema = load_schema("schemas/registries/nuget-registration.schema.json");
+    let sample: Value = serde_json::from_str(
+        r#"{
+            "@id": "https://api.nuget.org/v3/registration5-gz-semver2/sample/index.json",
+            "@context": {
+                "@vocab": "http://schema.nuget.org/schema#"
+            },
+            "count": 1,
+            "items": [
+                {
+                    "@id": "https://api.nuget.org/v3/registration5-gz-semver2/sample/index.json#page/1.0.0/1.0.0",
+                    "count": 1,
+                    "lower": "1.0.0",
+                    "upper": "1.0.0",
+                    "items": [
+                        {
+                            "@id": "https://api.nuget.org/v3/registration5-gz-semver2/sample/1.0.0.json",
+                            "catalogEntry": {
+                                "@id": "https://api.nuget.org/v3/catalog0/data/2024.01.01/sample.1.0.0.json",
+                                "id": "Sample",
+                                "version": "1.0.0",
+                                "description": "Sample package",
+                                "dependencyGroups": []
+                            },
+                            "packageContent": "https://api.nuget.org/v3-flatcontainer/sample/1.0.0/sample.1.0.0.nupkg"
+                        }
+                    ]
+                }
+            ]
+        }"#,
+    )
+    .unwrap();
+
+    validate(&schema, &sample).expect("NuGet registration sample should validate against schema");
+}
+
+#[test]
+fn should_validate_pub_package_sample_against_schema() {
+    let schema = load_schema("schemas/registries/pub-package.schema.json");
+    let sample: Value = serde_json::from_str(
+        r#"{
+            "name": "sample",
+            "latest": {
+                "version": "1.0.0",
+                "archive_url": "https://pub.dev/api/archives/sample-1.0.0.tar.gz",
+                "archive_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "pubspec": {
+                    "name": "sample",
+                    "version": "1.0.0",
+                    "environment": { "sdk": ">=3.0.0 <4.0.0" },
+                    "dependencies": {}
+                }
+            },
+            "versions": [
+                {
+                    "version": "1.0.0",
+                    "archive_url": "https://pub.dev/api/archives/sample-1.0.0.tar.gz",
+                    "pubspec": {
+                        "name": "sample",
+                        "version": "1.0.0"
+                    }
+                }
+            ]
+        }"#,
+    )
+    .unwrap();
+
+    validate(&schema, &sample).expect("pub package sample should validate against schema");
 }
 
 #[test]

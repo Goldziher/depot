@@ -1,48 +1,135 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title": "PyPI Simple Repository API (PEP 691)",
-	"description": "JSON response format for PEP 691 Simple Repository API v1",
-	"type": "object",
-	"required": ["meta", "name", "files"],
-	"properties": {
-		"meta": {
-			"type": "object",
-			"required": ["api-version"],
-			"properties": {
-				"api-version": { "type": "string", "const": "1.0" }
-			}
-		},
-		"name": { "type": "string", "description": "Normalized project name" },
-		"versions": {
-			"type": "array",
-			"items": { "type": "string" },
-			"description": "Available versions"
-		},
-		"files": {
-			"type": "array",
-			"items": {
-				"type": "object",
-				"required": ["filename", "url", "hashes"],
-				"properties": {
-					"filename": { "type": "string" },
-					"url": { "type": "string", "format": "uri" },
-					"hashes": {
-						"type": "object",
-						"properties": {
-							"sha256": { "type": "string" },
-							"md5": { "type": "string" }
-						}
-					},
-					"requires-python": { "type": ["string", "null"] },
-					"yanked": { "oneOf": [{ "type": "boolean" }, { "type": "string" }] },
-					"dist-info-metadata": {
-						"oneOf": [{ "type": "boolean" }, { "type": "object" }]
-					},
-					"gpg-sig": { "type": ["boolean", "null"] },
-					"size": { "type": "integer", "minimum": 0 },
-					"upload-time": { "type": ["string", "null"], "format": "date-time" }
-				}
-			}
-		}
-	}
+  "$defs": {
+    "PypiFile": {
+      "description": "A single distribution file in a PyPI project listing.",
+      "properties": {
+        "dist-info-metadata": {
+          "default": null
+        },
+        "filename": {
+          "type": "string"
+        },
+        "gpg-sig": {
+          "default": null,
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "hashes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "requires-python": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "size": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "upload-time": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "yanked": {
+          "$ref": "#/$defs/PypiYanked",
+          "default": false
+        }
+      },
+      "required": [
+        "filename",
+        "url",
+        "hashes"
+      ],
+      "type": "object"
+    },
+    "PypiMeta": {
+      "properties": {
+        "api-version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "api-version"
+      ],
+      "type": "object"
+    },
+    "PypiYanked": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Yanked can be `false`, `true`, or a reason string."
+    }
+  },
+  "$id": "https://schemas.depot.local/registries/pypi.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-derived JSON Schema for a PEP 691 Simple API project detail response.",
+  "properties": {
+    "files": {
+      "items": {
+        "$ref": "#/$defs/PypiFile"
+      },
+      "type": "array"
+    },
+    "meta": {
+      "$ref": "#/$defs/PypiMeta"
+    },
+    "name": {
+      "type": "string"
+    },
+    "versions": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "meta",
+    "name",
+    "files"
+  ],
+  "title": "PyPI Simple Repository API Project Detail",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-derived-json-schema",
+    "source_file": "crates/depot-core/src/registry/pypi.rs",
+    "source_ids": [
+      "pypa-specifications-index",
+      "pypi-simple-api",
+      "pypi-core-metadata",
+      "pypi-name-normalization",
+      "pypi-binary-distribution-format",
+      "pypi-source-distribution-format",
+      "pypi-json-api"
+    ],
+    "source_kinds": [
+      "official-prose-index",
+      "official-prose",
+      "official-schema-index"
+    ],
+    "source_type": "depot_core::registry::pypi::PypiProject",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance"
+  }
 }

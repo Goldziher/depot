@@ -1,0 +1,16 @@
+[package]
+name = "depot-schema-manager"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+blake3.workspace = true
+clap = { workspace = true, features = ["derive"] }
+depot-core.workspace = true
+reqwest.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+toml.workspace = true

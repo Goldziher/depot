@@ -1,53 +1,158 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title": "Cargo Sparse Index Entry",
-	"description": "Single version entry in a Cargo sparse index file (newline-delimited JSON)",
-	"type": "object",
-	"required": ["name", "vers", "deps", "cksum", "features", "yanked"],
-	"properties": {
-		"name": { "type": "string", "description": "Crate name" },
-		"vers": { "type": "string", "description": "Semver version" },
-		"deps": {
-			"type": "array",
-			"items": {
-				"type": "object",
-				"required": [
-					"name",
-					"req",
-					"features",
-					"optional",
-					"default_features",
-					"target",
-					"kind"
-				],
-				"properties": {
-					"name": { "type": "string" },
-					"req": { "type": "string", "description": "Version requirement" },
-					"features": { "type": "array", "items": { "type": "string" } },
-					"optional": { "type": "boolean" },
-					"default_features": { "type": "boolean" },
-					"target": { "type": ["string", "null"] },
-					"kind": { "type": "string", "enum": ["normal", "dev", "build"] },
-					"registry": { "type": ["string", "null"] },
-					"package": { "type": ["string", "null"] }
-				}
-			}
-		},
-		"cksum": {
-			"type": "string",
-			"description": "SHA256 checksum of .crate file"
-		},
-		"features": {
-			"type": "object",
-			"additionalProperties": { "type": "array", "items": { "type": "string" } }
-		},
-		"features2": {
-			"type": "object",
-			"additionalProperties": { "type": "array", "items": { "type": "string" } }
-		},
-		"yanked": { "type": "boolean" },
-		"links": { "type": ["string", "null"] },
-		"v": { "type": "integer", "description": "Index schema version" },
-		"rust_version": { "type": ["string", "null"] }
-	}
+  "$defs": {
+    "CargoDep": {
+      "description": "A dependency in a Cargo index entry.",
+      "properties": {
+        "default_features": {
+          "type": "boolean"
+        },
+        "features": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "$ref": "#/$defs/CargoDepKind"
+        },
+        "name": {
+          "type": "string"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "package": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "registry": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "req": {
+          "type": "string"
+        },
+        "target": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "req",
+        "features",
+        "optional",
+        "default_features",
+        "kind"
+      ],
+      "type": "object"
+    },
+    "CargoDepKind": {
+      "enum": [
+        "normal",
+        "dev",
+        "build"
+      ],
+      "type": "string"
+    }
+  },
+  "$id": "https://schemas.depot.local/registries/cargo.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-derived JSON Schema for one Cargo sparse index JSONL entry.",
+  "properties": {
+    "cksum": {
+      "type": "string"
+    },
+    "deps": {
+      "items": {
+        "$ref": "#/$defs/CargoDep"
+      },
+      "type": "array"
+    },
+    "features": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "default": {},
+      "type": "object"
+    },
+    "features2": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "default": null,
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "links": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "name": {
+      "type": "string"
+    },
+    "rust_version": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "v": {
+      "default": null,
+      "format": "uint32",
+      "minimum": 0,
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "vers": {
+      "type": "string"
+    },
+    "yanked": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "vers",
+    "deps",
+    "cksum",
+    "yanked"
+  ],
+  "title": "Cargo Sparse Index Entry",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-derived-json-schema",
+    "source_file": "crates/depot-core/src/registry/cargo.rs",
+    "source_ids": [
+      "cargo-registry-index"
+    ],
+    "source_kinds": [
+      "official-prose"
+    ],
+    "source_type": "depot_core::registry::cargo::CargoIndexEntry",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs; tests/conformance"
+  }
 }

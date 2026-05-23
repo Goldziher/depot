@@ -1,5 +1,6 @@
 use depot_core::config::Config;
 
 pub fn run(_config: Config) {
-    todo!("sync command not yet implemented")
+    eprintln!("error: sync command is not implemented in this MVP");
+    std::process::exit(2);
 }

@@ -1,0 +1,140 @@
+{
+  "$defs": {
+    "PubVersion": {
+      "description": "A package version in a Hosted Pub repository response.",
+      "properties": {
+        "archive_sha256": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "archive_url": {
+          "type": "string"
+        },
+        "published": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pubspec": {
+          "$ref": "#/$defs/Pubspec"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "pubspec",
+        "archive_url"
+      ],
+      "type": "object"
+    },
+    "Pubspec": {
+      "additionalProperties": true,
+      "description": "Pubspec subset relevant to package resolution.",
+      "properties": {
+        "dependencies": {
+          "additionalProperties": true,
+          "default": {},
+          "type": "object"
+        },
+        "description": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dev_dependencies": {
+          "additionalProperties": true,
+          "default": {},
+          "type": "object"
+        },
+        "environment": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "type": "object"
+        },
+        "homepage": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "repository": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://schemas.depot.local/registries/pub-package.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Depot-derived JSON Schema for Hosted Pub Repository package metadata.",
+  "properties": {
+    "latest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PubVersion"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "name": {
+      "type": "string"
+    },
+    "versions": {
+      "items": {
+        "$ref": "#/$defs/PubVersion"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "name",
+    "versions"
+  ],
+  "title": "Hosted Pub Package Metadata",
+  "type": "object",
+  "x-depot-source": {
+    "generated_by": "depot-schema-manager",
+    "schema_kind": "depot-derived-json-schema",
+    "source_file": "crates/depot-core/src/registry/pubdev.rs",
+    "source_ids": [
+      "pub-hosted-repository-v2",
+      "pub-dev-supported-api",
+      "pub-dev-package-api-dtos"
+    ],
+    "source_kinds": [
+      "official-prose",
+      "official-dart-source"
+    ],
+    "source_type": "depot_core::registry::pubdev::PubPackage",
+    "validated_by": "crates/depot-core/tests/schema_validation.rs"
+  }
+}
