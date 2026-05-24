@@ -6,8 +6,10 @@ Accepted
 
 ## Context
 
-Depot currently acts as a pull-through registry cache. Native package clients can install and restore
-through Depot, but publish, upload, yank, unlist, relist, and revert workflows are not implemented.
+Depot started as a pull-through registry cache. Native package clients can install and restore
+through Depot, and local hosted publishing has since been added for MVP registry adapters. Upstream
+publish forwarding, full identity/owner administration, and complete native mutation coverage remain
+future work.
 
 Full publishing support has a larger blast radius than pull-through reads. Upload routes accept
 untrusted archive bytes, mutate registry indexes, require write authorization, and may optionally
@@ -35,11 +37,15 @@ Publishing scope for the first implementation includes:
 - Yank, unyank, unlist, relist, or revert operations where the native protocol requires them for
   credible private registry behavior.
 - Native install/restore/fetch of locally published artifacts after upload.
+- Explicit operator publishing through CLI/MCP for cases where callers already know the package
+  name, version, artifact filename, and optional license metadata.
 
 The first implementation does not include a full user, owner, invitation, organization, search, or
-administrative platform. All write routes require scoped tokens. Token scopes must distinguish at
-least `read`, `publish`, `yank`, and `admin`, and may be constrained to specific ecosystems or
-package-name allowlists.
+administrative platform. Native write routes require scoped tokens when publishing is enabled. Token
+scopes must distinguish at least `read`, `publish`, `yank`, and `admin`, and may be constrained to
+specific ecosystems or package-name allowlists. Local CLI/MCP write operations use the same
+publishing service boundary; MCP additionally requires `--allow-writes` before mutating tools are
+exposed.
 
 Safety defaults:
 

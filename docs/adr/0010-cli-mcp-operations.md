@@ -24,6 +24,8 @@ and MCP server.
 - Config precedence is built-in defaults, config file, environment-driven config file selection, and
   CLI overrides for the current invocation.
 - MCP read tools are always available. MCP write tools require an explicit startup flag.
+- Human CLI output is optimized for operators. `--output json` is the stable machine-readable
+  format.
 
 The first operator surface includes server startup, config display and validation, registry status,
 package listing, version and metadata lookup, artifact fetch, explicit artifact publish,
@@ -32,6 +34,22 @@ name, version, artifact filename, and optional license metadata. Native archive 
 ecosystem-specific publish semantics remain adapter-owned work and must not be inferred loosely by
 operator commands.
 
+The initial command surface is:
+
+- `depot serve`
+- `depot config show|validate|init`
+- `depot registry list|status`
+- `depot package list|versions|metadata|fetch|publish|yank|unyank`
+- `depot cache delete-artifact`
+- `depot mcp serve [--allow-writes]`
+- `depot sync`, `depot lock verify`, and `depot lock update` as explicit deferred commands that
+  return controlled not-implemented errors
+
+The initial MCP tool surface mirrors the supported local operations: config display, registry
+status, package list/version/metadata lookup, artifact fetch, explicit artifact publish, yank,
+unyank, and cache delete. Tools that mutate storage or metadata are hidden unless the MCP server is
+started with `--allow-writes`.
+
 ## Consequences
 
 - CLI and MCP remain behaviorally aligned because they call the same operation functions.
@@ -39,3 +57,5 @@ operator commands.
 - MCP does not add a network listener or remote admin API surface in the first implementation.
 - Remote administration over HTTP requires a separate ADR because it introduces authentication,
   authorization, and compatibility concerns beyond stdio MCP.
+- Native archive inference in operator publish commands remains a future enhancement. Native upload
+  parsing continues to belong in protocol adapters.

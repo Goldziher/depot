@@ -46,6 +46,10 @@ Each adapter defines its own state trait for accessing both `PackageService` and
 - `HasNpmState` — `package_service` + `npm_upstream`
 - `HasCargoState` — `package_service` + `cargo_upstream`
 - `HasHexState` — `package_service` + `hex_upstream`
+- `HasMavenState` — `package_service` + `maven_upstream`
+- `HasRubyGemsState` — `package_service` + `rubygems_upstream`
+- `HasNuGetState` — `package_service` + `nuget_upstream`
+- `HasPubState` — `package_service` + `pub_upstream`
 
 This lets handlers serve cached upstream data directly (preserving all protocol-specific fields) while still going through `PackageService` for the caching lifecycle.
 
